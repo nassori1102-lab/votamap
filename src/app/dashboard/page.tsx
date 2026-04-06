@@ -61,8 +61,7 @@ export default function Dashboard() {
     { titulo:'Materiais', desc:'Biblioteca de artes para divulgação', icone:'🎨', href:'/dashboard/materiais', ativo:true },
     { titulo:'Financeiro', desc:'Controle de investimentos por região', icone:'💰', href:'/dashboard/financeiro', ativo:true },
     { titulo:'Comunicação', desc:'SMS, WhatsApp e e-mail em massa', icone:'💬', href:'/dashboard/comunicacao', ativo:false },
-    { titulo:'Agenda', desc:'Eventos e compromissos da campanha', icone:'📅', href:'/dashboard/agenda', ativo:false },
-    { titulo:'Apuração TSE', desc:'Cruzamento de votos com base cadastrada', icone:'📊', href:'/dashboard/apuracao', ativo:false },
+{ titulo:'Agenda', desc:'Eventos e compromissos da campanha', icone:'📅', href:'/dashboard/agenda', ativo:true },    { titulo:'Apuração TSE', desc:'Cruzamento de votos com base cadastrada', icone:'📊', href:'/dashboard/apuracao', ativo:false },
   ]
 
   const cards = [
