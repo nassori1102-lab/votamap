@@ -12,18 +12,30 @@ export default function Dashboard() {
   const supabase = createClient()
 
   useEffect(() => {
-    async function carregar() {
+  async function carregar() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
       setUsuario(user)
-      const [{ count: lideres }, { count: apoiadores }, { data: regioes }, { count: lideres_ativos }] = await Promise.all([
+
+      // Verificar perfil — contador vai direto para o financeiro
+      const { data: perfil } = await supabase
+        .from('usuarios')
+        .select('perfil')
+        .eq('id', user.id)
+        .single()
+
+      if (perfil?.perfil === 'contador') {
+        router.push('/dashboard/financeiro')
+        return
+      }
+
+  const [{ count: lideres }, { count: apoiadores }, { data: regioes }, { count: lideres_ativos }] = await Promise.all([
         supabase.from('lideres_regionais').select('*', { count:'exact', head:true }),
         supabase.from('apoiadores').select('*', { count:'exact', head:true }),
         supabase.from('lideres_regionais').select('cidade').eq('ativo', true),
         supabase.from('lideres_regionais').select('*', { count:'exact', head:true }).eq('ativo', true),
       ])
       const cidadesUnicas = new Set(regioes?.map((l: any) => l.cidade) || []).size
-      setMetricas({ lideres: lideres || 0, apoiadores: apoiadores || 0, regioes: cidadesUnicas, lideres_ativos: lideres_ativos || 0 })
       setLoading(false)
     }
     carregar()
@@ -45,9 +57,11 @@ export default function Dashboard() {
     { titulo:'Líderes Regionais', desc:'Cadastre e gerencie sua rede de líderes', icone:'👥', href:'/dashboard/lideres', ativo:true },
     { titulo:'Apoiadores', desc:'Base eleitoral cadastrada pelos líderes', icone:'🗳', href:'/dashboard/apoiadores', ativo:true },
     { titulo:'Mapa de Cobertura', desc:'Visualize regiões com e sem líderes', icone:'🗺️', href:'/dashboard/mapa', ativo:true },
+    { titulo:'Equipe', desc:'Gerencie acessos da equipe de campanha', icone:'🔐', href:'/dashboard/equipe', ativo:true },
+    { titulo:'Materiais', desc:'Biblioteca de artes para divulgação', icone:'🎨', href:'/dashboard/materiais', ativo:true },
+    { titulo:'Financeiro', desc:'Controle de investimentos por região', icone:'💰', href:'/dashboard/financeiro', ativo:true },
     { titulo:'Comunicação', desc:'SMS, WhatsApp e e-mail em massa', icone:'💬', href:'/dashboard/comunicacao', ativo:false },
-    { titulo:'Materiais', desc:'Biblioteca de artes para divulgação', icone:'🎨', href:'/dashboard/materiais', ativo:false },
-    { titulo:'Financeiro', desc:'Controle de investimentos por região', icone:'💰', href:'/dashboard/financeiro', ativo:false },
+    { titulo:'Agenda', desc:'Eventos e compromissos da campanha', icone:'📅', href:'/dashboard/agenda', ativo:false },
     { titulo:'Apuração TSE', desc:'Cruzamento de votos com base cadastrada', icone:'📊', href:'/dashboard/apuracao', ativo:false },
   ]
 
