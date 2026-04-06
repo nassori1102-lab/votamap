@@ -35,8 +35,9 @@ export async function POST(req: NextRequest) {
           to: numero,
         })
 
-        resultados.push({ telefone: dest.telefone, sid: message.sid })
+resultados.push({ telefone: dest.telefone, sid: message.sid })
       } catch (e: any) {
+        console.error('Erro SMS:', e.message, 'Número:', dest.telefone)
         erros.push({ telefone: dest.telefone, erro: e.message })
       }
 
