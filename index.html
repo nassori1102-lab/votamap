@@ -3,904 +3,1062 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VotaMap — O Sistema de Gestão de Campanha que Transforma Votos em Vitória</title>
+<title>VotaMap — Inteligência Estratégica para Campanhas Eleitorais</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --verde: #0EAF6A;
-    --verde-escuro: #097A49;
-    --verde-claro: #D0F5E5;
-    --amarelo: #F5C842;
-    --azul-noite: #0A0F1E;
-    --azul-medio: #111827;
-    --azul-card: #141C2E;
-    --azul-borda: #1E2A42;
-    --texto: #E8EDF8;
-    --texto-muted: #8494B4;
-    --texto-sutil: #4A5A7A;
-    --branco: #FFFFFF;
-    --radius: 12px;
-    --radius-lg: 20px;
-  }
+:root {
+  --azul:       #0B1F3A;
+  --azul-medio: #122845;
+  --azul-card:  #0F2040;
+  --azul-borda: #1C3558;
+  --azul-claro: #1E4080;
+  --dourado:    #C9A84C;
+  --dourado-claro: #E8C87A;
+  --dourado-escuro: #A07830;
+  --dourado-sutil: rgba(201,168,76,0.12);
+  --branco:     #FFFFFF;
+  --texto:      #E8EDF5;
+  --texto-muted:#8FA4C0;
+  --texto-sutil:#3D5470;
+  --vermelho:   #C0392B;
+  --r: 10px;
+  --r-lg: 16px;
+}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
 
-  html { scroll-behavior: smooth; }
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--azul);
+  color: var(--texto);
+  overflow-x: hidden;
+  line-height: 1.7;
+}
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--azul-noite);
-    color: var(--texto);
-    overflow-x: hidden;
-    line-height: 1.7;
-  }
+/* ── TEXTURE OVERLAY ── */
+body::after {
+  content:'';
+  position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 80px, rgba(201,168,76,0.018) 80px, rgba(201,168,76,0.018) 81px),
+    repeating-linear-gradient(90deg, transparent, transparent 80px, rgba(201,168,76,0.018) 80px, rgba(201,168,76,0.018) 81px);
+}
 
-  /* NOISE TEXTURE */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.5;
-  }
+.container { max-width:1120px; margin:0 auto; padding:0 28px; position:relative; z-index:1; }
 
-  .container { max-width: 1140px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+/* ══ NAV ══ */
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:200;
+  padding:0;
+  background: rgba(11,31,58,0.94);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(201,168,76,0.2);
+}
+.nav-inner {
+  max-width:1120px; margin:0 auto; padding:0 28px;
+  height:64px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.logo {
+  font-family:'Playfair Display', serif;
+  font-size:22px; font-weight:800;
+  letter-spacing:0.5px;
+  color: var(--branco);
+  display:flex; align-items:center; gap:10px;
+}
+.logo-icon {
+  width:32px; height:32px;
+  background: linear-gradient(135deg, var(--dourado), var(--dourado-escuro));
+  border-radius:6px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px;
+}
+.logo span { color: var(--dourado); }
+.nav-links { display:flex; align-items:center; gap:32px; }
+.nav-links a {
+  font-size:13px; font-weight:500; letter-spacing:0.3px;
+  color: var(--texto-muted); text-decoration:none;
+  transition: color .2s;
+}
+.nav-links a:hover { color: var(--dourado); }
+.nav-cta {
+  background: linear-gradient(135deg, var(--dourado), var(--dourado-escuro));
+  color: var(--azul) !important;
+  font-weight:600 !important;
+  padding:9px 22px;
+  border-radius:var(--r);
+  font-size:13px !important;
+  letter-spacing:0.4px;
+  transition: all .2s !important;
+  box-shadow: 0 4px 16px rgba(201,168,76,0.25);
+}
+.nav-cta:hover { transform:translateY(-1px); box-shadow:0 6px 24px rgba(201,168,76,0.35) !important; }
 
-  /* NAV */
-  nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    padding: 18px 0;
-    background: rgba(10,15,30,0.85);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(30,42,66,0.6);
-  }
-  nav .inner {
-    max-width: 1140px; margin: 0 auto; padding: 0 24px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .logo {
-    font-family: 'Syne', sans-serif;
-    font-size: 22px; font-weight: 800;
-    color: var(--branco);
-    letter-spacing: -0.5px;
-  }
-  .logo span { color: var(--verde); }
-  .nav-cta {
-    background: var(--verde);
-    color: #000;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 500;
-    font-size: 14px;
-    padding: 10px 22px;
-    border-radius: 8px;
-    text-decoration: none;
-    transition: all 0.2s;
-  }
-  .nav-cta:hover { background: #0fcf7c; transform: translateY(-1px); }
+/* ══ HERO ══ */
+.hero {
+  min-height:100vh;
+  display:flex; align-items:center;
+  padding:100px 0 80px;
+  position:relative; overflow:hidden;
+}
+.hero-bg {
+  position:absolute; inset:0; z-index:0;
+  background:
+    radial-gradient(ellipse 70% 70% at 70% 50%, rgba(30,64,128,0.35) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 5% 90%, rgba(201,168,76,0.07) 0%, transparent 50%),
+    linear-gradient(160deg, #0B1F3A 0%, #061224 100%);
+}
+/* Diagonal accent stripe */
+.hero-stripe {
+  position:absolute;
+  top:0; right:0; bottom:0;
+  width:46%;
+  background: linear-gradient(135deg, transparent 0%, rgba(18,40,69,0.6) 100%);
+  border-left:1px solid rgba(201,168,76,0.12);
+  clip-path: polygon(8% 0, 100% 0, 100% 100%, 0% 100%);
+  z-index:0;
+}
 
-  /* HERO */
-  .hero {
-    min-height: 100vh;
-    display: flex; align-items: center;
-    padding: 120px 0 80px;
-    position: relative;
-    overflow: hidden;
-  }
-  .hero-bg {
-    position: absolute; inset: 0; z-index: 0;
-    background:
-      radial-gradient(ellipse 80% 60% at 60% 40%, rgba(14,175,106,0.12) 0%, transparent 60%),
-      radial-gradient(ellipse 40% 40% at 10% 80%, rgba(245,200,66,0.06) 0%, transparent 50%),
-      linear-gradient(180deg, var(--azul-noite) 0%, #060A14 100%);
-  }
-  .hero-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 60px;
-    align-items: center;
-  }
-  .hero-badge {
-    display: inline-flex; align-items: center; gap: 8px;
-    background: rgba(14,175,106,0.12);
-    border: 1px solid rgba(14,175,106,0.3);
-    color: var(--verde);
-    font-size: 13px; font-weight: 500;
-    padding: 6px 14px;
-    border-radius: 100px;
-    margin-bottom: 24px;
-    animation: fadeUp 0.6s ease both;
-  }
-  .hero-badge::before {
-    content: '';
-    width: 6px; height: 6px;
-    background: var(--verde);
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(1.3); }
-  }
-  h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(38px, 5vw, 62px);
-    font-weight: 800;
-    line-height: 1.05;
-    letter-spacing: -2px;
-    margin-bottom: 24px;
-    animation: fadeUp 0.6s 0.1s ease both;
-  }
-  h1 .destaque {
-    color: var(--verde);
-    display: block;
-  }
-  .hero-sub {
-    font-size: 18px;
-    color: var(--texto-muted);
-    max-width: 480px;
-    margin-bottom: 40px;
-    font-weight: 300;
-    animation: fadeUp 0.6s 0.2s ease both;
-  }
-  .hero-ctas {
-    display: flex; gap: 14px; flex-wrap: wrap;
-    animation: fadeUp 0.6s 0.3s ease both;
-  }
-  .btn-primary {
-    background: var(--verde);
-    color: #000;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    font-size: 16px;
-    padding: 16px 32px;
-    border-radius: var(--radius);
-    text-decoration: none;
-    display: inline-flex; align-items: center; gap: 8px;
-    transition: all 0.2s;
-    box-shadow: 0 0 30px rgba(14,175,106,0.3);
-  }
-  .btn-primary:hover { background: #0fcf7c; transform: translateY(-2px); box-shadow: 0 0 40px rgba(14,175,106,0.4); }
-  .btn-secondary {
-    background: transparent;
-    color: var(--texto);
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 500;
-    font-size: 16px;
-    padding: 16px 28px;
-    border-radius: var(--radius);
-    text-decoration: none;
-    border: 1px solid var(--azul-borda);
-    transition: all 0.2s;
-    display: inline-flex; align-items: center; gap: 8px;
-  }
-  .btn-secondary:hover { border-color: var(--verde); color: var(--verde); }
+.hero-content { position:relative; z-index:1; }
+.hero-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:64px; align-items:center;
+}
 
-  /* HERO VISUAL */
-  .hero-visual {
-    position: relative;
-    animation: fadeUp 0.6s 0.4s ease both;
-  }
-  .dashboard-mock {
-    background: var(--azul-card);
-    border: 1px solid var(--azul-borda);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 60px rgba(14,175,106,0.08);
-  }
-  .mock-topbar {
-    background: var(--azul-medio);
-    padding: 12px 16px;
-    display: flex; align-items: center; gap: 8px;
-    border-bottom: 1px solid var(--azul-borda);
-  }
-  .mock-dot { width: 10px; height: 10px; border-radius: 50%; }
-  .mock-topbar-title {
-    font-size: 12px; color: var(--texto-muted); margin-left: 8px;
-    font-family: 'DM Sans', sans-serif;
-  }
-  .mock-body { padding: 20px; }
-  .mock-stats {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px;
-  }
-  .mock-stat {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid var(--azul-borda);
-    border-radius: 8px;
-    padding: 12px;
-  }
-  .mock-stat-label { font-size: 10px; color: var(--texto-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-  .mock-stat-value { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; margin-top: 4px; }
-  .mock-stat-value.verde { color: var(--verde); }
-  .mock-stat-value.amarelo { color: var(--amarelo); }
-  .mock-stat-delta { font-size: 10px; color: var(--verde); margin-top: 2px; }
-  .mock-map {
-    background: rgba(14,175,106,0.04);
-    border: 1px solid rgba(14,175,106,0.15);
-    border-radius: 8px;
-    height: 140px;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 16px;
-  }
-  .mock-map-label { position: absolute; top: 10px; left: 12px; font-size: 10px; color: var(--texto-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-  /* SVG map pins */
-  .pin { position: absolute; }
-  .pin-dot {
-    width: 12px; height: 12px; border-radius: 50%;
-    border: 2px solid;
-  }
-  .pin-dot.verde { background: rgba(14,175,106,0.3); border-color: var(--verde); }
-  .pin-dot.amarelo { background: rgba(245,200,66,0.3); border-color: var(--amarelo); }
-  .pin-dot.vermelho { background: rgba(239,68,68,0.3); border-color: #ef4444; }
-  .pin-ring {
-    position: absolute;
-    border-radius: 50%;
-    border: 1px solid;
-    animation: ring 2s infinite ease-out;
-    top: -4px; left: -4px;
-  }
-  @keyframes ring {
-    0% { width: 12px; height: 12px; opacity: 0.8; }
-    100% { width: 28px; height: 28px; opacity: 0; top: -12px; left: -12px; }
-  }
-  .mock-liders {
-    display: flex; flex-direction: column; gap: 6px;
-  }
-  .mock-lider-row {
-    display: flex; align-items: center; gap: 10px;
-    background: rgba(255,255,255,0.02);
-    border: 1px solid var(--azul-borda);
-    border-radius: 6px;
-    padding: 8px 10px;
-  }
-  .mock-avatar {
-    width: 28px; height: 28px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 10px; font-weight: 700;
-    flex-shrink: 0;
-  }
-  .mock-lider-info { flex: 1; }
-  .mock-lider-nome { font-size: 11px; font-weight: 500; }
-  .mock-lider-reg { font-size: 10px; color: var(--texto-muted); }
-  .mock-badge-verde {
-    font-size: 10px; padding: 2px 8px; border-radius: 100px;
-    background: rgba(14,175,106,0.15); color: var(--verde);
-    border: 1px solid rgba(14,175,106,0.3);
-  }
-  .mock-badge-amarelo {
-    font-size: 10px; padding: 2px 8px; border-radius: 100px;
-    background: rgba(245,200,66,0.1); color: var(--amarelo);
-    border: 1px solid rgba(245,200,66,0.2);
-  }
+.hero-eyebrow {
+  display:inline-flex; align-items:center; gap:10px;
+  margin-bottom:28px;
+  font-size:11px; font-weight:600; letter-spacing:2.5px;
+  text-transform:uppercase;
+  color: var(--dourado);
+  border-bottom:1px solid rgba(201,168,76,0.3);
+  padding-bottom:10px;
+  animation: fadeUp .6s ease both;
+}
+.hero-eyebrow-dot {
+  width:5px; height:5px; border-radius:50%;
+  background:var(--dourado);
+  animation:glow 2.5s infinite;
+}
+@keyframes glow {
+  0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.6)}
+  50%{box-shadow:0 0 0 5px rgba(201,168,76,0)}
+}
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(24px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+h1 {
+  font-family:'Playfair Display', serif;
+  font-size:clamp(38px,4.5vw,60px);
+  font-weight:900;
+  line-height:1.08;
+  letter-spacing:-0.5px;
+  margin-bottom:24px;
+  color: var(--branco);
+  animation: fadeUp .6s .1s ease both;
+}
+h1 em {
+  font-style:normal;
+  color: var(--dourado);
+  position:relative;
+  display:inline-block;
+}
+h1 em::after {
+  content:'';
+  position:absolute; bottom:-4px; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, var(--dourado), transparent);
+}
 
-  /* LOGOS / SOCIAL PROOF */
-  .social-proof {
-    padding: 40px 0;
-    border-top: 1px solid var(--azul-borda);
-    border-bottom: 1px solid var(--azul-borda);
-    text-align: center;
-  }
-  .social-proof-label { font-size: 13px; color: var(--texto-sutil); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
-  .eleicoes-stats {
-    display: flex; justify-content: center; gap: 60px; flex-wrap: wrap;
-  }
-  .eleicoes-stat { text-align: center; }
-  .eleicoes-stat-num {
-    font-family: 'Syne', sans-serif;
-    font-size: 32px; font-weight: 800;
-    color: var(--verde);
-  }
-  .eleicoes-stat-label { font-size: 13px; color: var(--texto-muted); }
+.hero-sub {
+  font-size:17px; font-weight:300;
+  color: var(--texto-muted);
+  max-width:460px;
+  margin-bottom:44px;
+  line-height:1.75;
+  animation: fadeUp .6s .2s ease both;
+}
 
-  /* SECTION TITLES */
-  .section { padding: 100px 0; }
-  .section-label {
-    font-size: 12px; font-weight: 500;
-    color: var(--verde);
-    text-transform: uppercase; letter-spacing: 2px;
-    margin-bottom: 12px;
-  }
-  .section-title {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(30px, 4vw, 48px);
-    font-weight: 800;
-    letter-spacing: -1.5px;
-    line-height: 1.1;
-    margin-bottom: 20px;
-  }
-  .section-sub {
-    font-size: 17px; color: var(--texto-muted);
-    max-width: 560px;
-    font-weight: 300;
-    line-height: 1.7;
-  }
+.hero-ctas {
+  display:flex; gap:14px; flex-wrap:wrap;
+  margin-bottom:48px;
+  animation: fadeUp .6s .3s ease both;
+}
+.btn-gold {
+  background: linear-gradient(135deg, var(--dourado-claro), var(--dourado-escuro));
+  color: var(--azul);
+  font-family:'IBM Plex Sans', sans-serif;
+  font-weight:600; font-size:15px;
+  padding:15px 32px;
+  border-radius:var(--r);
+  text-decoration:none;
+  display:inline-flex; align-items:center; gap:8px;
+  transition:all .25s;
+  box-shadow:0 6px 24px rgba(201,168,76,0.3);
+  letter-spacing:0.2px;
+}
+.btn-gold:hover { transform:translateY(-2px); box-shadow:0 10px 32px rgba(201,168,76,0.4); }
+.btn-ghost {
+  background:transparent;
+  color: var(--texto);
+  font-family:'IBM Plex Sans', sans-serif;
+  font-weight:500; font-size:15px;
+  padding:15px 28px;
+  border-radius:var(--r);
+  text-decoration:none;
+  border:1px solid var(--azul-borda);
+  transition:all .25s;
+  display:inline-flex; align-items:center; gap:8px;
+}
+.btn-ghost:hover { border-color:var(--dourado); color:var(--dourado); }
 
-  /* DOR */
-  .dor-bg {
-    background: linear-gradient(135deg, #0D1220 0%, #0A0F1E 100%);
-    border-top: 1px solid var(--azul-borda);
-    border-bottom: 1px solid var(--azul-borda);
-  }
-  .dor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 60px; }
-  .dor-card {
-    background: var(--azul-card);
-    border: 1px solid var(--azul-borda);
-    border-radius: var(--radius-lg);
-    padding: 32px;
-    transition: border-color 0.2s;
-  }
-  .dor-card:hover { border-color: rgba(239,68,68,0.4); }
-  .dor-icon {
-    font-size: 28px; margin-bottom: 16px;
-  }
-  .dor-titulo { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 10px; }
-  .dor-texto { font-size: 15px; color: var(--texto-muted); line-height: 1.6; }
-  .dor-destaque { color: #ef4444; font-weight: 500; }
+.hero-trust {
+  display:flex; align-items:center; gap:20px;
+  font-size:12px; color:var(--texto-sutil);
+  animation: fadeUp .6s .4s ease both;
+}
+.trust-item { display:flex; align-items:center; gap:6px; }
+.trust-check { color:var(--dourado); font-size:11px; }
 
-  /* SOLUCAO */
-  .sol-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 60px; }
-  .sol-card {
-    background: var(--azul-card);
-    border: 1px solid var(--azul-borda);
-    border-radius: var(--radius-lg);
-    padding: 32px;
-    display: flex; gap: 20px;
-    transition: all 0.2s;
-    cursor: default;
-  }
-  .sol-card:hover {
-    border-color: rgba(14,175,106,0.4);
-    background: rgba(14,175,106,0.04);
-    transform: translateY(-2px);
-  }
-  .sol-card.destaque-card {
-    border-color: rgba(14,175,106,0.3);
-    background: linear-gradient(135deg, rgba(14,175,106,0.08) 0%, var(--azul-card) 100%);
-    grid-column: span 2;
-  }
-  .sol-icone {
-    width: 48px; height: 48px; border-radius: 10px;
-    background: rgba(14,175,106,0.12);
-    border: 1px solid rgba(14,175,106,0.2);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px; flex-shrink: 0;
-  }
-  .sol-titulo { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; margin-bottom: 8px; }
-  .sol-texto { font-size: 14px; color: var(--texto-muted); line-height: 1.6; }
-  .sol-tag {
-    display: inline-block; margin-top: 10px;
-    font-size: 11px; color: var(--verde);
-    background: rgba(14,175,106,0.1);
-    border: 1px solid rgba(14,175,106,0.2);
-    padding: 3px 10px; border-radius: 100px;
-  }
+/* HERO DASHBOARD */
+.hero-dashboard {
+  position:relative; z-index:1;
+  animation: fadeUp .7s .3s ease both;
+}
+.dash-frame {
+  background: var(--azul-card);
+  border:1px solid var(--azul-borda);
+  border-radius:var(--r-lg);
+  overflow:hidden;
+  box-shadow:
+    0 40px 80px rgba(0,0,0,0.5),
+    0 0 0 1px rgba(201,168,76,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.dash-bar {
+  background:rgba(6,18,36,0.8);
+  padding:12px 16px;
+  display:flex; align-items:center; gap:8px;
+  border-bottom:1px solid var(--azul-borda);
+}
+.dash-dot { width:9px; height:9px; border-radius:50%; }
+.dash-title {
+  font-size:11px; color:var(--texto-sutil); margin-left:6px;
+  font-family:'IBM Plex Sans', sans-serif; letter-spacing:0.3px;
+}
+.dash-body { padding:20px; }
 
-  /* HIERARQUIA */
-  .hierarquia-section {
-    background: linear-gradient(180deg, var(--azul-noite), #060A14, var(--azul-noite));
-  }
-  .hierarquia-visual {
-    margin-top: 60px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0;
-  }
-  .hier-nivel {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .hier-box {
-    padding: 14px 32px;
-    border-radius: 10px;
-    border: 1px solid;
-    text-align: center;
-    position: relative;
-  }
-  .hier-box-titulo { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
-  .hier-box-sub { font-size: 12px; margin-top: 3px; }
-  .hier-arrow { width: 1px; height: 32px; position: relative; }
-  .hier-arrow::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 8px;
-    width: 1px;
-    background: var(--azul-borda);
-  }
-  .hier-arrow::after {
-    content: '▼';
-    position: absolute;
-    bottom: 0; left: -5px;
-    font-size: 10px; color: var(--azul-borda);
-  }
-  .hier-row { display: flex; gap: 16px; align-items: flex-start; }
-  .hier-row-arrows { display: flex; gap: 16px; }
-  .hier-row-arrow { width: 1px; height: 32px; position: relative; flex-shrink: 0; }
-  .hier-box.nivel-1 { background: rgba(139,92,246,0.1); border-color: rgba(139,92,246,0.4); min-width: 200px; }
-  .hier-box.nivel-1 .hier-box-titulo { color: #c4b5fd; }
-  .hier-box.nivel-1 .hier-box-sub { color: #8b5cf6; }
-  .hier-box.nivel-2 { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.4); min-width: 200px; }
-  .hier-box.nivel-2 .hier-box-titulo { color: #93c5fd; }
-  .hier-box.nivel-2 .hier-box-sub { color: #3b82f6; }
-  .hier-box.nivel-3 { background: rgba(20,184,166,0.1); border-color: rgba(20,184,166,0.4); min-width: 180px; }
-  .hier-box.nivel-3 .hier-box-titulo { color: #5eead4; }
-  .hier-box.nivel-3 .hier-box-sub { color: #14b8a6; }
-  .hier-box.nivel-4 { background: rgba(249,115,22,0.1); border-color: rgba(249,115,22,0.35); min-width: 160px; }
-  .hier-box.nivel-4 .hier-box-titulo { color: #fdba74; }
-  .hier-box.nivel-4 .hier-box-sub { color: #f97316; }
-  .hier-box.nivel-5 { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.35); min-width: 150px; }
-  .hier-box.nivel-5 .hier-box-titulo { color: #86efac; }
-  .hier-box.nivel-5 .hier-box-sub { color: #22c55e; }
+/* Stats row */
+.dash-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+.dash-stat {
+  background:rgba(255,255,255,0.025);
+  border:1px solid var(--azul-borda);
+  border-radius:8px; padding:12px 14px;
+}
+.ds-label { font-size:9px; text-transform:uppercase; letter-spacing:1px; color:var(--texto-sutil); margin-bottom:6px; }
+.ds-val { font-family:'Playfair Display',serif; font-size:24px; font-weight:700; line-height:1; }
+.ds-val.gold { color:var(--dourado); }
+.ds-val.blue { color:#6ba3d6; }
+.ds-val.white { color:var(--branco); }
+.ds-delta { font-size:9px; margin-top:4px; color:var(--dourado); }
 
-  /* PLANOS */
-  .planos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 60px; }
-  .plano-card {
-    background: var(--azul-card);
-    border: 1px solid var(--azul-borda);
-    border-radius: var(--radius-lg);
-    padding: 36px 28px;
-    display: flex; flex-direction: column;
-    transition: all 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-  .plano-card:hover { transform: translateY(-4px); }
-  .plano-card.popular {
-    border-color: var(--verde);
-    background: linear-gradient(160deg, rgba(14,175,106,0.1) 0%, var(--azul-card) 50%);
-    box-shadow: 0 0 40px rgba(14,175,106,0.15);
-  }
-  .plano-popular-badge {
-    position: absolute; top: 0; right: 28px;
-    background: var(--verde);
-    color: #000;
-    font-size: 11px; font-weight: 700;
-    padding: 4px 14px;
-    border-radius: 0 0 8px 8px;
-  }
-  .plano-nome { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--verde); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-  .plano-nome.azul { color: #60a5fa; }
-  .plano-nome.ouro { color: var(--amarelo); }
-  .plano-preco {
-    display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px;
-  }
-  .plano-cifrao { font-size: 18px; color: var(--texto-muted); font-weight: 300; margin-top: 8px; }
-  .plano-valor { font-family: 'Syne', sans-serif; font-size: 52px; font-weight: 800; letter-spacing: -2px; line-height: 1; }
-  .plano-mes { font-size: 14px; color: var(--texto-muted); }
-  .plano-desc { font-size: 14px; color: var(--texto-muted); margin-bottom: 28px; padding-bottom: 28px; border-bottom: 1px solid var(--azul-borda); margin-top: 12px; }
-  .plano-features { list-style: none; display: flex; flex-direction: column; gap: 12px; flex: 1; }
-  .plano-features li { display: flex; gap: 10px; font-size: 14px; align-items: flex-start; }
-  .plano-features li::before { content: '✓'; color: var(--verde); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
-  .plano-features li.nao { color: var(--texto-sutil); }
-  .plano-features li.nao::before { content: '—'; color: var(--texto-sutil); }
-  .plano-cta {
-    margin-top: 32px;
-    display: block;
-    text-align: center;
-    padding: 14px;
-    border-radius: 10px;
-    font-weight: 600; font-size: 15px;
-    text-decoration: none;
-    transition: all 0.2s;
-  }
-  .plano-cta.outline { border: 1px solid var(--azul-borda); color: var(--texto); }
-  .plano-cta.outline:hover { border-color: var(--verde); color: var(--verde); }
-  .plano-cta.filled { background: var(--verde); color: #000; box-shadow: 0 0 20px rgba(14,175,106,0.3); }
-  .plano-cta.filled:hover { background: #0fcf7c; }
-  .plano-cta.gold { background: var(--amarelo); color: #000; box-shadow: 0 0 20px rgba(245,200,66,0.2); }
-  .plano-cta.gold:hover { background: #f9d348; }
+/* Map */
+.dash-map {
+  background:rgba(18,40,69,0.5);
+  border:1px solid var(--azul-borda);
+  border-radius:8px; height:130px;
+  position:relative; overflow:hidden;
+  margin-bottom:14px;
+}
+.dm-label { position:absolute; top:9px; left:12px; font-size:9px; text-transform:uppercase; letter-spacing:1px; color:var(--texto-sutil); }
+.dm-legend { position:absolute; bottom:9px; right:10px; display:flex; gap:10px; font-size:9px; color:var(--texto-sutil); }
+.dm-legend span { display:flex; align-items:center; gap:4px; }
+.dm-legend b { display:inline-block; width:6px; height:6px; border-radius:50%; }
 
-  /* DEPOIMENTOS */
-  .depo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 60px; }
-  .depo-card {
-    background: var(--azul-card);
-    border: 1px solid var(--azul-borda);
-    border-radius: var(--radius-lg);
-    padding: 28px;
-  }
-  .depo-stars { color: var(--amarelo); font-size: 14px; margin-bottom: 16px; letter-spacing: 2px; }
-  .depo-texto { font-size: 15px; color: var(--texto-muted); line-height: 1.7; margin-bottom: 20px; font-style: italic; }
-  .depo-autor { display: flex; align-items: center; gap: 12px; }
-  .depo-avatar {
-    width: 40px; height: 40px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 14px; flex-shrink: 0;
-  }
-  .depo-nome { font-weight: 600; font-size: 14px; }
-  .depo-cargo { font-size: 12px; color: var(--texto-muted); }
+/* Pins */
+.mpin { position:absolute; }
+.mpin-core { width:10px; height:10px; border-radius:50%; border:1.5px solid; }
+.mpin-ring {
+  position:absolute; border-radius:50%; border:1px solid;
+  animation:mring 2.2s infinite ease-out;
+  top:-4px; left:-4px;
+}
+@keyframes mring {
+  0%{width:10px;height:10px;opacity:.7}
+  100%{width:26px;height:26px;opacity:0;top:-12px;left:-12px}
+}
 
-  /* FAQ */
-  .faq-grid { max-width: 720px; margin: 60px auto 0; display: flex; flex-direction: column; gap: 2px; }
-  .faq-item {
-    background: var(--azul-card);
-    border: 1px solid var(--azul-borda);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-  .faq-pergunta {
-    padding: 20px 24px;
-    cursor: pointer;
-    display: flex; justify-content: space-between; align-items: center;
-    font-weight: 500; font-size: 15px;
-    user-select: none;
-    transition: color 0.2s;
-  }
-  .faq-pergunta:hover { color: var(--verde); }
-  .faq-chevron { transition: transform 0.2s; font-size: 12px; color: var(--texto-muted); }
-  .faq-resposta {
-    max-height: 0; overflow: hidden;
-    transition: max-height 0.3s ease, padding 0.2s;
-    font-size: 14px; color: var(--texto-muted); line-height: 1.7;
-    padding: 0 24px;
-  }
-  .faq-item.open .faq-resposta { max-height: 300px; padding: 0 24px 20px; }
-  .faq-item.open .faq-chevron { transform: rotate(180deg); }
+/* Leader rows */
+.dash-rows { display:flex; flex-direction:column; gap:7px; }
+.dash-row {
+  display:flex; align-items:center; gap:10px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--azul-borda);
+  border-radius:7px; padding:8px 11px;
+}
+.drow-av {
+  width:28px; height:28px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:600; flex-shrink:0;
+}
+.drow-info { flex:1; }
+.drow-name { font-size:11px; font-weight:500; }
+.drow-sub  { font-size:9px; color:var(--texto-muted); }
+.badge {
+  font-size:9px; padding:2px 9px; border-radius:100px;
+  font-weight:500;
+}
+.badge-gold { background:rgba(201,168,76,.15); color:var(--dourado); border:1px solid rgba(201,168,76,.25); }
+.badge-blue { background:rgba(107,163,214,.12); color:#6ba3d6; border:1px solid rgba(107,163,214,.2); }
 
-  /* CTA FINAL */
-  .cta-final {
-    background: linear-gradient(135deg, rgba(14,175,106,0.15) 0%, rgba(14,175,106,0.05) 100%);
-    border: 1px solid rgba(14,175,106,0.2);
-    border-radius: 24px;
-    padding: 80px 60px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    margin: 60px 0;
-  }
-  .cta-final::before {
-    content: '';
-    position: absolute;
-    top: -60px; left: 50%;
-    transform: translateX(-50%);
-    width: 300px; height: 300px;
-    background: radial-gradient(circle, rgba(14,175,106,0.15) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .cta-final h2 { font-family: 'Syne', sans-serif; font-size: clamp(28px, 4vw, 44px); font-weight: 800; letter-spacing: -1.5px; margin-bottom: 16px; }
-  .cta-final p { font-size: 17px; color: var(--texto-muted); margin-bottom: 40px; }
-  .cta-final-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+@keyframes fadeUp {
+  from{opacity:0;transform:translateY(22px)}
+  to{opacity:1;transform:translateY(0)}
+}
 
-  /* FOOTER */
-  footer {
-    padding: 40px 0;
-    border-top: 1px solid var(--azul-borda);
-    display: flex; justify-content: space-between; align-items: center;
-    flex-wrap: wrap; gap: 16px;
-    font-size: 13px; color: var(--texto-sutil);
-  }
+/* ══ STRIP ══ */
+.strip {
+  border-top:1px solid var(--azul-borda);
+  border-bottom:1px solid var(--azul-borda);
+  background:rgba(6,18,36,0.6);
+  padding:40px 0;
+}
+.strip-inner {
+  display:flex; justify-content:center; align-items:center;
+  gap:0; flex-wrap:wrap;
+}
+.strip-stat {
+  text-align:center;
+  padding:0 48px;
+  border-right:1px solid var(--azul-borda);
+}
+.strip-stat:last-child { border-right:none; }
+.strip-num {
+  font-family:'Playfair Display',serif;
+  font-size:38px; font-weight:800;
+  color:var(--dourado);
+  line-height:1;
+}
+.strip-label { font-size:12px; color:var(--texto-muted); margin-top:6px; }
 
-  /* SCROLL REVEAL */
-  .reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s ease; }
-  .reveal.visible { opacity: 1; transform: translateY(0); }
+/* ══ SECTIONS ══ */
+.section { padding:100px 0; }
 
-  @media (max-width: 768px) {
-    .hero-grid { grid-template-columns: 1fr; }
-    .hero-visual { display: none; }
-    .dor-grid { grid-template-columns: 1fr; }
-    .sol-grid { grid-template-columns: 1fr; }
-    .sol-card.destaque-card { grid-column: span 1; }
-    .planos-grid { grid-template-columns: 1fr; }
-    .depo-grid { grid-template-columns: 1fr; }
-    .cta-final { padding: 48px 28px; }
-    footer { flex-direction: column; text-align: center; }
-    .eleicoes-stats { gap: 32px; }
-  }
+.s-eyebrow {
+  font-size:11px; font-weight:600; letter-spacing:2.5px;
+  text-transform:uppercase; color:var(--dourado);
+  margin-bottom:14px;
+  display:flex; align-items:center; gap:10px;
+}
+.s-eyebrow::before {
+  content:''; width:24px; height:1px; background:var(--dourado-escuro);
+}
+
+.s-title {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(30px,3.5vw,46px);
+  font-weight:800; letter-spacing:-0.5px; line-height:1.1;
+  margin-bottom:18px; color:var(--branco);
+}
+.s-sub {
+  font-size:17px; font-weight:300;
+  color:var(--texto-muted); max-width:520px; line-height:1.75;
+}
+
+/* ══ DORES ══ */
+.dores-bg { background: linear-gradient(180deg, #061224 0%, var(--azul) 100%); }
+.dores-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:56px; }
+.dor-card {
+  background:var(--azul-card);
+  border:1px solid var(--azul-borda);
+  border-radius:var(--r-lg); padding:32px;
+  transition:border-color .25s;
+  position:relative; overflow:hidden;
+}
+.dor-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, var(--vermelho), transparent);
+  opacity:0; transition:opacity .25s;
+}
+.dor-card:hover { border-color:rgba(192,57,43,0.4); }
+.dor-card:hover::before { opacity:1; }
+.dor-num {
+  font-family:'Playfair Display',serif;
+  font-size:48px; font-weight:900;
+  color:rgba(192,57,43,0.15);
+  line-height:1; margin-bottom:16px;
+}
+.dor-titulo { font-size:17px; font-weight:600; margin-bottom:10px; color:var(--branco); }
+.dor-texto { font-size:14px; color:var(--texto-muted); line-height:1.7; }
+.dor-alerta { color:rgba(192,57,43,0.9); font-weight:500; }
+
+/* ══ FUNCIONALIDADES ══ */
+.func-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:18px; margin-top:56px; }
+.func-card {
+  background:var(--azul-card);
+  border:1px solid var(--azul-borda);
+  border-radius:var(--r-lg); padding:32px;
+  display:flex; gap:22px;
+  transition:all .25s; cursor:default;
+  position:relative; overflow:hidden;
+}
+.func-card::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent, var(--dourado-escuro), transparent);
+  opacity:0; transition:opacity .3s;
+}
+.func-card:hover { border-color:rgba(201,168,76,0.35); transform:translateY(-2px); }
+.func-card:hover::after { opacity:1; }
+.func-card.span2 { grid-column:span 2; }
+.func-icon {
+  width:52px; height:52px; border-radius:10px; flex-shrink:0;
+  background:var(--dourado-sutil);
+  border:1px solid rgba(201,168,76,0.2);
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px;
+}
+.func-titulo { font-size:17px; font-weight:600; margin-bottom:8px; color:var(--branco); }
+.func-texto { font-size:14px; color:var(--texto-muted); line-height:1.65; }
+.func-tag {
+  display:inline-block; margin-top:12px;
+  font-size:10px; font-weight:600; letter-spacing:1px;
+  text-transform:uppercase;
+  color:var(--dourado);
+  background:var(--dourado-sutil);
+  border:1px solid rgba(201,168,76,0.2);
+  padding:3px 10px; border-radius:100px;
+}
+
+/* ══ HIERARQUIA ══ */
+.hier-bg { background:linear-gradient(180deg, var(--azul), #061224, var(--azul)); }
+.hier-visual {
+  margin-top:60px;
+  display:flex; flex-direction:column; align-items:center;
+}
+.hv-node {
+  padding:14px 36px;
+  border-radius:10px; border:1px solid;
+  text-align:center; min-width:220px;
+}
+.hv-name { font-family:'Playfair Display',serif; font-size:16px; font-weight:700; }
+.hv-sub  { font-size:11px; margin-top:3px; }
+.hv-line { width:1px; height:28px; background:rgba(201,168,76,0.2); margin:0 auto; position:relative; }
+.hv-line::after { content:'▾'; position:absolute; bottom:-2px; left:-5px; font-size:10px; color:rgba(201,168,76,0.3); }
+.hv-row { display:flex; gap:16px; }
+.hv-row-lines { display:flex; gap:16px; justify-content:center; }
+.hv-row-line { width:1px; height:28px; background:rgba(201,168,76,0.2); position:relative; }
+.hv-row-line::after { content:'▾'; position:absolute; bottom:-2px; left:-5px; font-size:10px; color:rgba(201,168,76,0.3); }
+
+.hv-node.n1 { background:rgba(139,92,246,.1); border-color:rgba(139,92,246,.4); }
+.hv-node.n1 .hv-name { color:#c4b5fd; }
+.hv-node.n1 .hv-sub  { color:#8b5cf6; }
+.hv-node.n2 { background:rgba(201,168,76,.08); border-color:rgba(201,168,76,.35); }
+.hv-node.n2 .hv-name { color:var(--dourado-claro); }
+.hv-node.n2 .hv-sub  { color:var(--dourado-escuro); }
+.hv-node.n3 { background:rgba(59,130,246,.08); border-color:rgba(59,130,246,.35); }
+.hv-node.n3 .hv-name { color:#93c5fd; }
+.hv-node.n3 .hv-sub  { color:#3b82f6; }
+.hv-node.n4 { background:rgba(20,184,166,.08); border-color:rgba(20,184,166,.3); min-width:170px; }
+.hv-node.n4 .hv-name { color:#5eead4; }
+.hv-node.n4 .hv-sub  { color:#14b8a6; }
+.hv-node.n5 { background:rgba(34,197,94,.08); border-color:rgba(34,197,94,.3); min-width:155px; }
+.hv-node.n5 .hv-name { color:#86efac; }
+.hv-node.n5 .hv-sub  { color:#22c55e; }
+
+/* ══ PLANOS ══ */
+.planos-bg { background:linear-gradient(180deg, #061224, var(--azul)); }
+.planos-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:22px; margin-top:56px; }
+.plano-card {
+  background:var(--azul-card);
+  border:1px solid var(--azul-borda);
+  border-radius:var(--r-lg); padding:36px 28px;
+  display:flex; flex-direction:column;
+  position:relative; overflow:hidden;
+  transition:all .25s;
+}
+.plano-card:hover { transform:translateY(-4px); }
+.plano-card.destaque {
+  border-color:rgba(201,168,76,0.5);
+  background:linear-gradient(160deg, rgba(201,168,76,0.07) 0%, var(--azul-card) 50%);
+  box-shadow:0 0 48px rgba(201,168,76,0.12);
+}
+.plano-badge-top {
+  position:absolute; top:0; left:50%; transform:translateX(-50%);
+  background:linear-gradient(135deg,var(--dourado),var(--dourado-escuro));
+  color:var(--azul); font-size:10px; font-weight:700;
+  letter-spacing:1.5px; text-transform:uppercase;
+  padding:4px 20px; border-radius:0 0 10px 10px;
+}
+
+.plano-tier {
+  font-size:10px; font-weight:600; letter-spacing:2px;
+  text-transform:uppercase; margin-bottom:12px;
+}
+.plano-tier.t1 { color:#6ba3d6; }
+.plano-tier.t2 { color:var(--dourado); }
+.plano-tier.t3 { color:#c4b5fd; }
+
+.plano-preco {
+  display:flex; align-items:baseline; gap:4px; margin-bottom:6px;
+}
+.plano-cifrao { font-size:18px; font-weight:300; color:var(--texto-muted); margin-top:8px; }
+.plano-val {
+  font-family:'Playfair Display',serif;
+  font-size:54px; font-weight:900; letter-spacing:-2px; line-height:1;
+}
+.plano-val.t1 { color:#6ba3d6; }
+.plano-val.t2 { color:var(--dourado-claro); }
+.plano-val.t3 { color:#c4b5fd; }
+.plano-mes { font-size:13px; color:var(--texto-muted); }
+
+.plano-desc {
+  font-size:13px; color:var(--texto-muted);
+  padding:16px 0; border-top:1px solid var(--azul-borda);
+  border-bottom:1px solid var(--azul-borda);
+  margin:12px 0 22px; line-height:1.6;
+}
+.plano-lista { list-style:none; display:flex; flex-direction:column; gap:11px; flex:1; }
+.plano-lista li { font-size:13px; display:flex; gap:9px; align-items:flex-start; }
+.plano-lista li::before { content:'✓'; color:var(--dourado); font-weight:700; flex-shrink:0; font-size:12px; margin-top:1px; }
+.plano-lista li.off { color:var(--texto-sutil); }
+.plano-lista li.off::before { content:'—'; color:var(--texto-sutil); }
+
+.plano-btn {
+  margin-top:28px; display:block; text-align:center;
+  padding:13px; border-radius:var(--r);
+  font-weight:600; font-size:14px; letter-spacing:0.3px;
+  text-decoration:none; transition:all .25s;
+}
+.plano-btn.outline { border:1px solid var(--azul-borda); color:var(--texto); }
+.plano-btn.outline:hover { border-color:var(--dourado); color:var(--dourado); }
+.plano-btn.gold {
+  background:linear-gradient(135deg,var(--dourado-claro),var(--dourado-escuro));
+  color:var(--azul); box-shadow:0 4px 20px rgba(201,168,76,0.25);
+}
+.plano-btn.gold:hover { box-shadow:0 6px 28px rgba(201,168,76,0.38); transform:translateY(-1px); }
+.plano-btn.purple { background:rgba(139,92,246,.15); border:1px solid rgba(139,92,246,.35); color:#c4b5fd; }
+.plano-btn.purple:hover { background:rgba(139,92,246,.25); }
+
+.planos-nota {
+  margin-top:28px; text-align:center;
+  font-size:12px; color:var(--texto-sutil);
+  display:flex; justify-content:center; gap:28px; flex-wrap:wrap;
+}
+.planos-nota span { display:flex; align-items:center; gap:6px; }
+
+/* ══ DEPOIMENTOS ══ */
+.depo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:56px; }
+.depo-card {
+  background:var(--azul-card);
+  border:1px solid var(--azul-borda);
+  border-radius:var(--r-lg); padding:30px;
+  position:relative;
+}
+.depo-card::before {
+  content:'"';
+  position:absolute; top:18px; right:22px;
+  font-family:'Playfair Display',serif;
+  font-size:64px; font-weight:900;
+  color:rgba(201,168,76,0.08);
+  line-height:1;
+}
+.depo-stars { color:var(--dourado); letter-spacing:3px; font-size:13px; margin-bottom:16px; }
+.depo-texto { font-size:14px; font-weight:300; font-style:italic; color:var(--texto-muted); line-height:1.75; margin-bottom:22px; }
+.depo-autor { display:flex; align-items:center; gap:12px; }
+.depo-av {
+  width:42px; height:42px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:700; flex-shrink:0;
+  border:1px solid rgba(201,168,76,0.2);
+}
+.depo-nome { font-size:14px; font-weight:600; }
+.depo-cargo { font-size:11px; color:var(--texto-muted); }
+
+/* ══ FAQ ══ */
+.faq-wrap { max-width:720px; margin:56px auto 0; display:flex; flex-direction:column; gap:2px; }
+.faq-item {
+  background:var(--azul-card);
+  border:1px solid var(--azul-borda);
+  border-radius:var(--r); overflow:hidden;
+  transition:border-color .2s;
+}
+.faq-item.open { border-color:rgba(201,168,76,0.3); }
+.faq-q {
+  padding:20px 24px;
+  display:flex; justify-content:space-between; align-items:center;
+  cursor:pointer; user-select:none;
+  font-size:15px; font-weight:500;
+  transition:color .2s;
+}
+.faq-q:hover { color:var(--dourado); }
+.faq-chev { font-size:11px; color:var(--texto-muted); transition:transform .25s; }
+.faq-item.open .faq-chev { transform:rotate(180deg); color:var(--dourado); }
+.faq-a {
+  max-height:0; overflow:hidden;
+  font-size:14px; font-weight:300; color:var(--texto-muted); line-height:1.75;
+  padding:0 24px; transition:max-height .3s ease, padding .2s;
+}
+.faq-item.open .faq-a { max-height:300px; padding:0 24px 22px; }
+
+/* ══ CTA FINAL ══ */
+.cta-final-wrap {
+  background: var(--azul-card);
+  border:1px solid rgba(201,168,76,0.25);
+  border-radius:20px;
+  padding:80px 60px;
+  text-align:center;
+  position:relative; overflow:hidden;
+  margin:60px 0;
+}
+.cta-final-wrap::before {
+  content:'';
+  position:absolute; top:-80px; left:50%; transform:translateX(-50%);
+  width:400px; height:400px;
+  background:radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+  pointer-events:none;
+}
+.cta-final-wrap::after {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent, var(--dourado-escuro), transparent);
+}
+.cta-final-wrap h2 {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(28px,3.5vw,46px);
+  font-weight:900; letter-spacing:-0.5px;
+  margin-bottom:16px; color:var(--branco);
+}
+.cta-final-wrap p { font-size:17px; font-weight:300; color:var(--texto-muted); margin-bottom:44px; line-height:1.7; }
+.cta-btns { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+.cta-nota { font-size:12px; color:var(--texto-sutil); margin-top:24px; }
+
+/* ══ FOOTER ══ */
+footer {
+  border-top:1px solid var(--azul-borda);
+  padding:36px 0;
+}
+.footer-inner {
+  display:flex; justify-content:space-between; align-items:center;
+  flex-wrap:wrap; gap:16px;
+  font-size:12px; color:var(--texto-sutil);
+}
+
+/* ══ SCROLL REVEAL ══ */
+.reveal { opacity:0; transform:translateY(28px); transition:all .65s ease; }
+.reveal.visible { opacity:1; transform:translateY(0); }
+
+/* ══ RESPONSIVE ══ */
+@media(max-width:900px){
+  .hero-grid,.func-grid,.dores-grid,.planos-grid,.depo-grid { grid-template-columns:1fr; }
+  .hero-visual,.hero-stripe { display:none; }
+  .func-card.span2 { grid-column:span 1; }
+  .hv-row { flex-wrap:wrap; justify-content:center; }
+  .strip-stat { padding:16px 24px; border-right:none; border-bottom:1px solid var(--azul-borda); }
+  .strip-stat:last-child { border-bottom:none; }
+  .strip-inner { flex-direction:column; }
+  .cta-final-wrap { padding:48px 24px; }
+  .nav-links { display:none; }
+  .planos-nota { flex-direction:column; align-items:center; gap:10px; }
+  footer .footer-inner { flex-direction:column; text-align:center; }
+}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
+<!-- ═══ NAV ═══ -->
 <nav>
-  <div class="inner">
-    <div class="logo">Vota<span>Map</span></div>
-    <a href="#planos" class="nav-cta">Ver planos →</a>
+  <div class="nav-inner">
+    <div class="logo">
+      <div class="logo-icon">🗳</div>
+      Vota<span>Map</span>
+    </div>
+    <div class="nav-links">
+      <a href="#problema">Problema</a>
+      <a href="#funcionalidades">Funcionalidades</a>
+      <a href="#planos">Planos</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contato" class="nav-cta">Falar com especialista</a>
+    </div>
   </div>
 </nav>
 
-<!-- HERO -->
+<!-- ═══ HERO ═══ -->
 <section class="hero">
   <div class="hero-bg"></div>
+  <div class="hero-stripe"></div>
   <div class="container">
     <div class="hero-grid">
+
       <div class="hero-content">
-        <div class="hero-badge">Eleições 2026 — 6 meses para você ganhar</div>
+        <div class="hero-eyebrow">
+          <span class="hero-eyebrow-dot"></span>
+          Eleições Gerais 2026 · Deputados Federal e Estadual
+        </div>
         <h1>
-          Sua campanha.<br>
-          Sob controle.<br>
-          <span class="destaque">Cada voto mapeado.</span>
+          Cada líder.<br>
+          Cada voto.<br>
+          <em>Cada região.</em>
         </h1>
-        <p class="hero-sub">O sistema de gestão de campanha que organiza sua rede de líderes, monitora cada região e compara seus resultados com a apuração real do TSE.</p>
+        <p class="hero-sub">
+          O sistema de inteligência estratégica que organiza sua rede de líderes, mapeia a cobertura do seu território e cruza sua base com a apuração real do TSE.
+        </p>
         <div class="hero-ctas">
-          <a href="#planos" class="btn-primary">Quero começar agora →</a>
-          <a href="#funcionalidades" class="btn-secondary">Ver funcionalidades</a>
+          <a href="#planos" class="btn-gold">Quero organizar minha campanha →</a>
+          <a href="#funcionalidades" class="btn-ghost">Ver funcionalidades</a>
+        </div>
+        <div class="hero-trust">
+          <div class="trust-item"><span class="trust-check">✓</span> Conformidade LGPD total</div>
+          <div class="trust-item"><span class="trust-check">✓</span> Dados no Brasil</div>
+          <div class="trust-item"><span class="trust-check">✓</span> Ativo em 48h</div>
         </div>
       </div>
+
       <div class="hero-visual">
-        <div class="dashboard-mock">
-          <div class="mock-topbar">
-            <div class="mock-dot" style="background:#ef4444"></div>
-            <div class="mock-dot" style="background:#f59e0b"></div>
-            <div class="mock-dot" style="background:#22c55e"></div>
-            <span class="mock-topbar-title">VotaMap — Painel do Candidato</span>
-          </div>
-          <div class="mock-body">
-            <div class="mock-stats">
-              <div class="mock-stat">
-                <div class="mock-stat-label">Líderes ativos</div>
-                <div class="mock-stat-value verde">47</div>
-                <div class="mock-stat-delta">↑ +12 este mês</div>
-              </div>
-              <div class="mock-stat">
-                <div class="mock-stat-label">Apoiadores</div>
-                <div class="mock-stat-value" style="color:#60a5fa">2.841</div>
-                <div class="mock-stat-delta" style="color:#60a5fa">↑ +380 este mês</div>
-              </div>
-              <div class="mock-stat">
-                <div class="mock-stat-label">Meta de votos</div>
-                <div class="mock-stat-value amarelo">68%</div>
-                <div class="mock-stat-delta" style="color:var(--amarelo)">↑ no prazo</div>
-              </div>
+        <div class="hero-dashboard">
+          <div class="dash-frame">
+            <div class="dash-bar">
+              <div class="dash-dot" style="background:#ef4444"></div>
+              <div class="dash-dot" style="background:#f59e0b"></div>
+              <div class="dash-dot" style="background:#22c55e"></div>
+              <span class="dash-title">VotaMap · Painel Estratégico do Candidato</span>
             </div>
-            <div class="mock-map">
-              <div class="mock-map-label">Mapa de cobertura — RS</div>
-              <div class="pin" style="top:30px;left:60px"><div class="pin-dot verde"></div><div class="pin-ring" style="border-color:var(--verde)"></div></div>
-              <div class="pin" style="top:55px;left:140px"><div class="pin-dot verde"></div><div class="pin-ring" style="border-color:var(--verde);animation-delay:0.5s"></div></div>
-              <div class="pin" style="top:80px;left:90px"><div class="pin-dot amarelo"></div></div>
-              <div class="pin" style="top:40px;left:200px"><div class="pin-dot verde"></div></div>
-              <div class="pin" style="top:90px;left:170px"><div class="pin-dot vermelho"></div></div>
-              <div class="pin" style="top:100px;left:240px"><div class="pin-dot verde"></div><div class="pin-ring" style="border-color:var(--verde);animation-delay:1s"></div></div>
-              <div style="position:absolute;bottom:10px;right:12px;display:flex;gap:10px;font-size:9px;color:var(--texto-muted)">
-                <span style="color:var(--verde)">● Ativo</span>
-                <span style="color:var(--amarelo)">● Inativo</span>
-                <span style="color:#ef4444">● Sem líder</span>
-              </div>
-            </div>
-            <div class="mock-liders">
-              <div class="mock-lider-row">
-                <div class="mock-avatar" style="background:rgba(14,175,106,0.15);color:var(--verde)">MA</div>
-                <div class="mock-lider-info">
-                  <div class="mock-lider-nome">Maria Alves</div>
-                  <div class="mock-lider-reg">Zona Norte · 142 apoiadores</div>
+            <div class="dash-body">
+              <div class="dash-stats">
+                <div class="dash-stat">
+                  <div class="ds-label">Líderes ativos</div>
+                  <div class="ds-val gold">47</div>
+                  <div class="ds-delta">↑ +12 este mês</div>
                 </div>
-                <div class="mock-badge-verde">Destaque</div>
-              </div>
-              <div class="mock-lider-row">
-                <div class="mock-avatar" style="background:rgba(59,130,246,0.15);color:#60a5fa">RS</div>
-                <div class="mock-lider-info">
-                  <div class="mock-lider-nome">Roberto Silva</div>
-                  <div class="mock-lider-reg">Centro · 98 apoiadores</div>
+                <div class="dash-stat">
+                  <div class="ds-label">Apoiadores</div>
+                  <div class="ds-val blue">2.841</div>
+                  <div class="ds-delta" style="color:#6ba3d6">↑ +380 este mês</div>
                 </div>
-                <div class="mock-badge-amarelo">Em andamento</div>
+                <div class="dash-stat">
+                  <div class="ds-label">Meta de votos</div>
+                  <div class="ds-val white">68%</div>
+                  <div class="ds-delta">↑ no prazo</div>
+                </div>
+              </div>
+              <div class="dash-map">
+                <div class="dm-label">Cobertura territorial — RS</div>
+                <div class="mpin" style="top:28px;left:55px">
+                  <div class="mpin-core" style="background:rgba(201,168,76,.3);border-color:var(--dourado)"></div>
+                  <div class="mpin-ring" style="border-color:var(--dourado)"></div>
+                </div>
+                <div class="mpin" style="top:52px;left:135px">
+                  <div class="mpin-core" style="background:rgba(201,168,76,.3);border-color:var(--dourado)"></div>
+                  <div class="mpin-ring" style="border-color:var(--dourado);animation-delay:.6s"></div>
+                </div>
+                <div class="mpin" style="top:78px;left:88px">
+                  <div class="mpin-core" style="background:rgba(107,163,214,.3);border-color:#6ba3d6"></div>
+                </div>
+                <div class="mpin" style="top:38px;left:195px">
+                  <div class="mpin-core" style="background:rgba(201,168,76,.3);border-color:var(--dourado)"></div>
+                </div>
+                <div class="mpin" style="top:88px;left:165px">
+                  <div class="mpin-core" style="background:rgba(192,57,43,.3);border-color:#c0392b"></div>
+                </div>
+                <div class="mpin" style="top:98px;left:235px">
+                  <div class="mpin-core" style="background:rgba(201,168,76,.3);border-color:var(--dourado)"></div>
+                  <div class="mpin-ring" style="border-color:var(--dourado);animation-delay:1.1s"></div>
+                </div>
+                <div class="dm-legend">
+                  <span><b style="background:var(--dourado)"></b>Ativo</span>
+                  <span><b style="background:#6ba3d6"></b>Inativo</span>
+                  <span><b style="background:#c0392b"></b>Sem líder</span>
+                </div>
+              </div>
+              <div class="dash-rows">
+                <div class="dash-row">
+                  <div class="drow-av" style="background:rgba(201,168,76,.15);color:var(--dourado)">MA</div>
+                  <div class="drow-info">
+                    <div class="drow-name">Maria Alves</div>
+                    <div class="drow-sub">Zona Norte · 142 apoiadores</div>
+                  </div>
+                  <div class="badge badge-gold">Destaque</div>
+                </div>
+                <div class="dash-row">
+                  <div class="drow-av" style="background:rgba(107,163,214,.15);color:#6ba3d6">RS</div>
+                  <div class="drow-info">
+                    <div class="drow-name">Roberto Silva</div>
+                    <div class="drow-sub">Centro · 98 apoiadores</div>
+                  </div>
+                  <div class="badge badge-blue">Andamento</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </section>
 
-<!-- NÚMEROS -->
-<section class="social-proof">
+<!-- ═══ STRIP DE NÚMEROS ═══ -->
+<div class="strip">
   <div class="container">
-    <div class="social-proof-label">O cenário das eleições 2026 no Brasil</div>
-    <div class="eleicoes-stats">
-      <div class="eleicoes-stat">
-        <div class="eleicoes-stat-num">2.368</div>
-        <div class="eleicoes-stat-label">candidatos a Dep. Federal (2022)</div>
+    <div class="strip-inner">
+      <div class="strip-stat">
+        <div class="strip-num">2.368</div>
+        <div class="strip-label">candidatos a Dep. Federal em 2022</div>
       </div>
-      <div class="eleicoes-stat">
-        <div class="eleicoes-stat-num">513</div>
-        <div class="eleicoes-stat-label">vagas na Câmara</div>
+      <div class="strip-stat">
+        <div class="strip-num">513</div>
+        <div class="strip-label">vagas na Câmara dos Deputados</div>
       </div>
-      <div class="eleicoes-stat">
-        <div class="eleicoes-stat-num">6 meses</div>
-        <div class="eleicoes-stat-label">para organizar sua base</div>
+      <div class="strip-stat">
+        <div class="strip-num">6 meses</div>
+        <div class="strip-label">para construir sua base eleitoral</div>
       </div>
-      <div class="eleicoes-stat">
-        <div class="eleicoes-stat-num">1 sistema</div>
-        <div class="eleicoes-stat-label">para gerenciar tudo</div>
+      <div class="strip-stat">
+        <div class="strip-num">1 sistema</div>
+        <div class="strip-label">para controlar sua campanha inteira</div>
       </div>
     </div>
   </div>
-</section>
+</div>
 
-<!-- DORES -->
-<section class="section dor-bg">
+<!-- ═══ DORES ═══ -->
+<section class="section dores-bg" id="problema">
   <div class="container">
     <div class="reveal">
-      <div class="section-label">O problema</div>
-      <h2 class="section-title">Campanha desorganizada<br>é voto perdido.</h2>
-      <p class="section-sub">Sem um sistema, sua equipe trabalha no escuro. Você não sabe quem está trabalhando, quais regiões estão cobertas, ou onde estão os votos que você esperava.</p>
+      <div class="s-eyebrow">O problema</div>
+      <h2 class="s-title">Campanha desorganizada<br>é mandato que não acontece.</h2>
+      <p class="s-sub">Sem controle centralizado, sua equipe trabalha no escuro. Você investe tempo e dinheiro sem saber onde estão os resultados.</p>
     </div>
-    <div class="dor-grid reveal">
+    <div class="dores-grid reveal">
       <div class="dor-card">
-        <div class="dor-icon">📋</div>
-        <div class="dor-titulo">Planilhas que ninguém atualiza</div>
-        <div class="dor-texto">Líderes anotam apoiadores em papel ou no celular. <span class="dor-destaque">Você nunca sabe o número real.</span> Na hora de comunicar, metade do contato está errado ou desatualizado.</div>
+        <div class="dor-num">01</div>
+        <div class="dor-titulo">Líderes sem monitoramento</div>
+        <div class="dor-texto">Você designa líderes para regiões, mas <span class="dor-alerta">não sabe se eles estão trabalhando</span>. Sem métricas individuais, o esforço da campanha fica invisível — até a derrota revelar a verdade.</div>
       </div>
       <div class="dor-card">
-        <div class="dor-icon">🗺️</div>
-        <div class="dor-titulo">Regiões inteiras sem cobertura</div>
-        <div class="dor-texto">Você só descobre que um bairro não tem líder <span class="dor-destaque">quando já é tarde demais</span> para montar estrutura. O concorrente já chegou lá primeiro.</div>
+        <div class="dor-num">02</div>
+        <div class="dor-titulo">Regiões inteiras descobertas</div>
+        <div class="dor-texto">Você só descobre que um bairro inteiro ficou sem cobertura <span class="dor-alerta">quando já é tarde demais</span> para agir. O concorrente chegou primeiro, capturou os eleitores e construiu a base que deveria ser sua.</div>
       </div>
       <div class="dor-card">
-        <div class="dor-icon">📊</div>
-        <div class="dor-titulo">Sem avaliação após a eleição</div>
-        <div class="dor-texto">Depois do resultado, você <span class="dor-destaque">não consegue saber</span> quais líderes trouxeram votos e quais não trabalharam. A mesma ineficiência se repete na próxima eleição.</div>
+        <div class="dor-num">03</div>
+        <div class="dor-titulo">Nenhuma análise pós-eleição</div>
+        <div class="dor-texto">Após o resultado, <span class="dor-alerta">você não consegue identificar</span> quais líderes converteram em votos reais e quais apenas preencheram formulários. O mesmo erro se repete na próxima eleição.</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- FUNCIONALIDADES -->
+<!-- ═══ FUNCIONALIDADES ═══ -->
 <section class="section" id="funcionalidades">
   <div class="container">
     <div class="reveal">
-      <div class="section-label">A solução</div>
-      <h2 class="section-title">Tudo que sua campanha<br>precisa, em um lugar.</h2>
-      <p class="section-sub">Do cadastro do primeiro apoiador até a análise final dos votos por região — o VotaMap conecta sua equipe inteira em tempo real.</p>
+      <div class="s-eyebrow">A solução</div>
+      <h2 class="s-title">Inteligência estratégica<br>em cada decisão da campanha.</h2>
+      <p class="s-sub">Do primeiro cadastro de apoiador ao relatório final de apuração — o VotaMap conecta toda a sua estrutura em tempo real.</p>
     </div>
-    <div class="sol-grid reveal">
-      <div class="sol-card destaque-card">
-        <div class="sol-icone">🗺️</div>
+    <div class="func-grid reveal">
+
+      <div class="func-card span2">
+        <div class="func-icon">🗺️</div>
         <div>
-          <div class="sol-titulo">Mapa de líderes em tempo real</div>
-          <div class="sol-texto">Visualize num mapa interativo quais bairros e regiões já têm líderes, quais estão inativos e quais ainda precisam de cobertura. Cada pino abre a ficha completa do líder com métricas de performance.</div>
-          <span class="sol-tag">Geolocalização por bairro e zona eleitoral</span>
+          <div class="func-titulo">Mapa estratégico de cobertura territorial</div>
+          <div class="func-texto">Visualize num mapa interativo quais bairros e zonas eleitorais já têm líderes ativos, quais estão inativos e quais precisam urgentemente de cobertura. Cada pino abre a ficha completa do líder com histórico de cadastros, última atividade e métricas individuais de performance. Identifique os pontos cegos da sua campanha antes que o adversário chegue primeiro.</div>
+          <span class="func-tag">Geolocalização por bairro e zona eleitoral</span>
         </div>
       </div>
-      <div class="sol-card">
-        <div class="sol-icone">👥</div>
+
+      <div class="func-card">
+        <div class="func-icon">👥</div>
         <div>
-          <div class="sol-titulo">Rede multinível de líderes</div>
-          <div class="sol-texto">Estrutura completa: candidato → chefe de campanha → líderes regionais → apoiadores. Cada nível vê apenas o que é seu, com privacidade total.</div>
+          <div class="func-titulo">Rede multinível de lideranças</div>
+          <div class="func-texto">Estrutura completa com controle de acesso por nível: candidato → chefe de campanha → líderes regionais → apoiadores. Cada nível visualiza apenas o que é seu. Privacidade e segurança total dos dados.</div>
         </div>
       </div>
-      <div class="sol-card">
-        <div class="sol-icone">📲</div>
+
+      <div class="func-card">
+        <div class="func-icon">📲</div>
         <div>
-          <div class="sol-titulo">Cadastro mobile pelo líder</div>
-          <div class="sol-texto">O líder abre o celular na rua, cadastra o apoiador na hora. Todos os dados chegam automaticamente ao seu painel.</div>
+          <div class="func-titulo">Cadastro mobile em campo</div>
+          <div class="func-texto">O líder abre o celular onde estiver e cadastra o apoiador na hora — nome, contato, bairro, zona eleitoral e grau de engajamento. Os dados chegam instantaneamente ao seu painel.</div>
         </div>
       </div>
-      <div class="sol-card">
-        <div class="sol-icone">💬</div>
+
+      <div class="func-card">
+        <div class="func-icon">💬</div>
         <div>
-          <div class="sol-titulo">Comunicação em massa</div>
-          <div class="sol-texto">Envie SMS, WhatsApp e e-mail segmentados para toda a base ou grupos específicos. Histórico completo de cada disparo.</div>
+          <div class="func-titulo">Comunicação segmentada em massa</div>
+          <div class="func-texto">Envie SMS, WhatsApp e e-mail para toda a base ou para grupos específicos: apoiadores de um bairro, líderes de uma região, toda a rede. Histórico completo com métricas de entrega.</div>
         </div>
       </div>
-      <div class="sol-card">
-        <div class="sol-icone">🎨</div>
+
+      <div class="func-card">
+        <div class="func-icon">🎨</div>
         <div>
-          <div class="sol-titulo">Biblioteca de materiais</div>
-          <div class="sol-texto">Sua equipe de marketing sobe artes, vídeos e textos. Seus líderes baixam e compartilham nas redes. Tudo organizado por tema e data.</div>
+          <div class="func-titulo">Biblioteca centralizada de materiais</div>
+          <div class="func-texto">Sua equipe de marketing sobe artes, vídeos e textos para redes sociais. Seus líderes baixam e compartilham na hora certa. Organizado por tema, data e formato. Sem WhatsApp correndo solto.</div>
         </div>
       </div>
-      <div class="sol-card">
-        <div class="sol-icone">📈</div>
+
+      <div class="func-card">
+        <div class="func-icon">💰</div>
         <div>
-          <div class="sol-titulo">Apuração × base cadastrada</div>
-          <div class="sol-texto">Após a eleição, cruzamos os dados do TSE com sua base por zona eleitoral. Você descobre exatamente quem trabalhou e onde foram os votos.</div>
-          <span class="sol-tag">Exclusivo VotaMap</span>
+          <div class="func-titulo">Gestão financeira por região</div>
+          <div class="func-texto">Registre investimentos feitos em cada região e monitore o retorno por zona. Compare custo por apoiador captado entre diferentes líderes e decida onde concentrar os recursos da campanha.</div>
         </div>
       </div>
+
+      <div class="func-card span2">
+        <div class="func-icon">📊</div>
+        <div>
+          <div class="func-titulo">Cruzamento de apuração TSE × base cadastrada</div>
+          <div class="func-texto">Na noite da eleição, o VotaMap busca os arquivos JSON oficiais do TSE a cada 30 minutos e cruza automaticamente com sua base por zona e seção eleitoral. No dia seguinte, você recebe um relatório completo: votos obtidos vs. esperados em cada região, quais líderes converteram apoiadores em votos reais e onde estão os pontos de melhoria para o próximo ciclo eleitoral.</div>
+          <span class="func-tag">Funcionalidade exclusiva VotaMap</span>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
 
-<!-- PLANOS -->
-<section class="section" id="planos" style="background: linear-gradient(180deg, var(--azul-noite), #060A14);">
+<!-- ═══ HIERARQUIA ═══ -->
+<section class="section hier-bg">
+  <div class="container" style="text-align:center">
+    <div class="reveal">
+      <div class="s-eyebrow" style="justify-content:center">Estrutura do sistema</div>
+      <h2 class="s-title">Cada nível tem seu acesso.<br>Você tem a visão completa.</h2>
+      <p class="s-sub" style="margin:0 auto">Estrutura multinível semelhante a uma rede organizada — cada pessoa vê apenas o que precisa, e você enxerga tudo.</p>
+    </div>
+    <div class="hier-visual reveal">
+      <div class="hv-node n1" style="margin-bottom:0">
+        <div class="hv-name">Candidato + Chefe de Campanha</div>
+        <div class="hv-sub">Visão 360° de toda a campanha</div>
+      </div>
+      <div class="hv-line"></div>
+      <div class="hv-row" style="gap:16px">
+        <div class="hv-node n3"><div class="hv-name">Líder Regional</div><div class="hv-sub">Região A</div></div>
+        <div class="hv-node n3"><div class="hv-name">Líder Regional</div><div class="hv-sub">Região B</div></div>
+        <div class="hv-node n3"><div class="hv-name">Líder Regional</div><div class="hv-sub">Região C</div></div>
+      </div>
+      <div class="hv-row-lines" style="gap:16px; margin-top:0">
+        <div class="hv-row-line"></div>
+        <div class="hv-row-line"></div>
+        <div class="hv-row-line"></div>
+      </div>
+      <div class="hv-row" style="gap:16px">
+        <div class="hv-node n5"><div class="hv-name">Apoiadores</div><div class="hv-sub">Região A</div></div>
+        <div class="hv-node n5"><div class="hv-name">Apoiadores</div><div class="hv-sub">Região B</div></div>
+        <div class="hv-node n5"><div class="hv-name">Apoiadores</div><div class="hv-sub">Região C</div></div>
+      </div>
+      <p style="margin-top:28px;font-size:13px;color:var(--texto-sutil)">Cada candidato tem seu ambiente completamente isolado — nenhum dado é compartilhado entre licenças</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PLANOS ═══ -->
+<section class="section planos-bg" id="planos">
   <div class="container">
     <div class="reveal" style="text-align:center">
-      <div class="section-label">Planos e preços</div>
-      <h2 class="section-title">Escolha o plano da sua campanha</h2>
-      <p class="section-sub" style="margin: 0 auto">Sem taxa de instalação. Ative hoje, cancele quando quiser. Dados seguros com criptografia e conformidade total com a LGPD.</p>
+      <div class="s-eyebrow" style="justify-content:center">Planos e investimento</div>
+      <h2 class="s-title">Escolha o plano da sua campanha</h2>
+      <p class="s-sub" style="margin:0 auto">Sem taxa de instalação. Ative hoje, cancele quando quiser. Dados protegidos com conformidade total à LGPD e Res. TSE nº 23.732/2024.</p>
     </div>
     <div class="planos-grid reveal">
 
-      <!-- PLANO BÁSICO -->
+      <!-- BÁSICO -->
       <div class="plano-card">
-        <div class="plano-nome azul">Básico</div>
+        <div class="plano-tier t1">Básico</div>
         <div class="plano-preco">
           <span class="plano-cifrao">R$</span>
-          <span class="plano-valor" style="color:#60a5fa">497</span>
+          <span class="plano-val t1">497</span>
           <span class="plano-mes">/mês</span>
         </div>
-        <div class="plano-desc">Para campanhas começando a se organizar. Ideal para quem quer sair do zero.</div>
-        <ul class="plano-features">
+        <div class="plano-desc">Para campanhas iniciando a organização. Ideal para quem quer sair do zero com estrutura.</div>
+        <ul class="plano-lista">
           <li>Até 10 líderes regionais</li>
-          <li>Cadastro ilimitado de apoiadores</li>
+          <li>Apoiadores ilimitados</li>
           <li>Mapa de cobertura por região</li>
           <li>Dashboard com métricas básicas</li>
           <li>Envio de e-mail em massa</li>
           <li>Biblioteca de materiais (5 GB)</li>
           <li>Suporte por e-mail</li>
-          <li class="nao">SMS e WhatsApp em massa</li>
-          <li class="nao">Relatório de apuração TSE</li>
-          <li class="nao">Gestão financeira por região</li>
+          <li class="off">SMS e WhatsApp em massa</li>
+          <li class="off">Gestão financeira por região</li>
+          <li class="off">Relatório de apuração TSE</li>
         </ul>
-        <a href="#contato" class="plano-cta outline">Começar com Básico</a>
+        <a href="#contato" class="plano-btn outline">Começar com o Básico</a>
       </div>
 
-      <!-- PLANO PRO -->
-      <div class="plano-card popular">
-        <div class="plano-popular-badge">MAIS POPULAR</div>
-        <div class="plano-nome">Profissional</div>
+      <!-- PROFISSIONAL -->
+      <div class="plano-card destaque">
+        <div class="plano-badge-top">MAIS POPULAR</div>
+        <div class="plano-tier t2" style="margin-top:12px">Profissional</div>
         <div class="plano-preco">
           <span class="plano-cifrao">R$</span>
-          <span class="plano-valor" style="color:var(--verde)">997</span>
+          <span class="plano-val t2">997</span>
           <span class="plano-mes">/mês</span>
         </div>
-        <div class="plano-desc">Para campanhas sérias que querem controle total e comunicação integrada.</div>
-        <ul class="plano-features">
+        <div class="plano-desc">Para campanhas sérias que exigem controle total, comunicação integrada e inteligência de dados.</div>
+        <ul class="plano-lista">
           <li>Líderes ilimitados</li>
-          <li>Cadastro ilimitado de apoiadores</li>
+          <li>Apoiadores ilimitados</li>
           <li>Mapa de cobertura completo</li>
           <li>Dashboard avançado com rankings</li>
           <li>SMS + WhatsApp + E-mail em massa</li>
           <li>Biblioteca de materiais (20 GB)</li>
           <li>Gestão financeira por região</li>
           <li>Relatório de performance dos líderes</li>
-          <li>Suporte prioritário (WhatsApp)</li>
-          <li class="nao">Relatório de apuração TSE</li>
+          <li>Suporte prioritário via WhatsApp</li>
+          <li class="off">Relatório de apuração TSE</li>
         </ul>
-        <a href="#contato" class="plano-cta filled">Quero o Profissional →</a>
+        <a href="#contato" class="plano-btn gold">Quero o Profissional →</a>
       </div>
 
-      <!-- PLANO PREMIUM -->
+      <!-- PREMIUM -->
       <div class="plano-card">
-        <div class="plano-nome ouro">Premium</div>
+        <div class="plano-tier t3">Premium</div>
         <div class="plano-preco">
           <span class="plano-cifrao">R$</span>
-          <span class="plano-valor" style="color:var(--amarelo)">1.997</span>
+          <span class="plano-val t3">1.997</span>
           <span class="plano-mes">/mês</span>
         </div>
-        <div class="plano-desc">Para campanhas de alto impacto que querem inteligência de dados completa.</div>
-        <ul class="plano-features">
+        <div class="plano-desc">Para campanhas de alto impacto que exigem inteligência de dados completa e apoio estratégico.</div>
+        <ul class="plano-lista">
           <li>Tudo do Profissional</li>
           <li>Relatório de apuração TSE</li>
           <li>Cruzamento votos × base cadastrada</li>
-          <li>Análise de performance pós-eleição</li>
-          <li>Consultoria de estratégia (2h/mês)</li>
+          <li>Análise estratégica pós-eleição</li>
           <li>Biblioteca ilimitada de materiais</li>
-          <li>Treinamento da equipe (onboarding)</li>
-          <li>Suporte VIP com gestor dedicado</li>
+          <li>Onboarding ao vivo da equipe</li>
+          <li>Consultoria estratégica (2h/mês)</li>
+          <li>Gestor de conta dedicado</li>
           <li>Acesso antecipado a novas funções</li>
         </ul>
-        <a href="#contato" class="plano-cta gold">Quero o Premium →</a>
+        <a href="#contato" class="plano-btn purple">Quero o Premium</a>
       </div>
 
     </div>
-    <div class="reveal" style="text-align:center;margin-top:32px">
-      <p style="font-size:13px;color:var(--texto-sutil)">💳 Pagamento via PIX, cartão de crédito ou boleto · 🔒 Dados protegidos com criptografia AES-256 · 📋 Conformidade total com a LGPD e Res. TSE nº 23.732/2024</p>
+    <div class="planos-nota reveal">
+      <span>💳 PIX · Cartão · Boleto</span>
+      <span>🔒 Criptografia AES-256</span>
+      <span>📋 Conformidade LGPD</span>
+      <span>🇧🇷 Servidores no Brasil</span>
     </div>
   </div>
 </section>
 
-<!-- DEPOIMENTOS -->
+<!-- ═══ DEPOIMENTOS ═══ -->
 <section class="section">
   <div class="container">
     <div class="reveal" style="text-align:center">
-      <div class="section-label">Resultados reais</div>
-      <h2 class="section-title">Candidatos que chegaram lá<br>com inteligência de dados</h2>
+      <div class="s-eyebrow" style="justify-content:center">Resultados reais</div>
+      <h2 class="s-title">Quem organiza a campanha<br>com dados, chega mais longe.</h2>
     </div>
     <div class="depo-grid reveal">
       <div class="depo-card">
         <div class="depo-stars">★★★★★</div>
-        <div class="depo-texto">"Antes do VotaMap, eu não sabia se meus líderes estavam trabalhando. Hoje vejo tudo: quantos cadastros cada um fez essa semana, quais bairros precisam de reforço. Minha base cresceu 3x em 2 meses."</div>
+        <div class="depo-texto">"Antes do VotaMap, eu não sabia se meus líderes estavam de fato trabalhando. Hoje vejo tudo: quantos cadastros cada um fez, quais bairros precisam de reforço. Minha base cresceu três vezes em dois meses."</div>
         <div class="depo-autor">
-          <div class="depo-avatar" style="background:rgba(14,175,106,0.15);color:var(--verde)">CF</div>
+          <div class="depo-av" style="background:rgba(201,168,76,.12);color:var(--dourado)">CF</div>
           <div>
             <div class="depo-nome">Carlos F.</div>
             <div class="depo-cargo">Candidato a Dep. Estadual — RS</div>
@@ -909,9 +1067,9 @@
       </div>
       <div class="depo-card">
         <div class="depo-stars">★★★★★</div>
-        <div class="depo-texto">"O mapa me mostrou que eu não tinha nenhum líder na zona leste da cidade — uma região com 40 mil eleitores. Seria um desastre na eleição. Corrigi isso em 3 semanas."</div>
+        <div class="depo-texto">"O mapa me revelou que eu não tinha nenhum líder na zona leste — uma região com quarenta mil eleitores. Seria um desastre silencioso. Corrigi isso em três semanas antes do adversário perceber."</div>
         <div class="depo-autor">
-          <div class="depo-avatar" style="background:rgba(59,130,246,0.15);color:#60a5fa">AP</div>
+          <div class="depo-av" style="background:rgba(107,163,214,.12);color:#6ba3d6">AP</div>
           <div>
             <div class="depo-nome">Ana Paula M.</div>
             <div class="depo-cargo">Candidata a Dep. Federal — SP</div>
@@ -920,9 +1078,9 @@
       </div>
       <div class="depo-card">
         <div class="depo-stars">★★★★★</div>
-        <div class="depo-texto">"O relatório pós-apuração cruzando com a base do TSE foi revelador. Descobri que 2 dos meus melhores líderes em números de cadastro trouxeram praticamente zero votos. Aprendi para sempre."</div>
+        <div class="depo-texto">"O relatório cruzando os dados do TSE com minha base foi revelador. Dois dos meus líderes com mais cadastros trouxeram praticamente zero votos. Aprendi o que nenhum consultor me ensinaria."</div>
         <div class="depo-autor">
-          <div class="depo-avatar" style="background:rgba(245,200,66,0.15);color:var(--amarelo)">MR</div>
+          <div class="depo-av" style="background:rgba(139,92,246,.12);color:#c4b5fd">MR</div>
           <div>
             <div class="depo-nome">Marcos R.</div>
             <div class="depo-cargo">Candidato a Dep. Estadual — MG</div>
@@ -933,102 +1091,98 @@
   </div>
 </section>
 
-<!-- FAQ -->
-<section class="section" style="background: linear-gradient(180deg, #060A14, var(--azul-noite));">
+<!-- ═══ FAQ ═══ -->
+<section class="section" id="faq" style="background:linear-gradient(180deg,#061224,var(--azul))">
   <div class="container">
     <div class="reveal" style="text-align:center">
-      <div class="section-label">Perguntas frequentes</div>
-      <h2 class="section-title">Tudo que você precisa saber</h2>
+      <div class="s-eyebrow" style="justify-content:center">Perguntas frequentes</div>
+      <h2 class="s-title">Tire suas dúvidas</h2>
     </div>
-    <div class="faq-grid reveal">
+    <div class="faq-wrap reveal">
+
       <div class="faq-item">
-        <div class="faq-pergunta" onclick="toggleFaq(this)">
-          Meus dados e dos meus apoiadores são seguros? <span class="faq-chevron">▼</span>
-        </div>
-        <div class="faq-resposta">Sim. Todos os dados são criptografados com AES-256, armazenados em servidores no Brasil, com backup diário. O sistema está em total conformidade com a LGPD e a Resolução TSE nº 23.732/2024, que exige consentimento expresso dos apoiadores. Cada candidato tem seu ambiente completamente isolado — nenhum candidato vê dados de outro.</div>
+        <div class="faq-q" onclick="faq(this)">Os dados dos meus apoiadores são seguros? <span class="faq-chev">▼</span></div>
+        <div class="faq-a">Sim. Todos os dados são criptografados com AES-256 e armazenados em servidores localizados no Brasil, com backup automático diário. O sistema está em conformidade total com a LGPD e a Resolução TSE nº 23.732/2024, que exige consentimento expresso de cada apoiador cadastrado. Cada candidato tem seu ambiente completamente isolado — nenhum dado é compartilhado ou visível entre licenças diferentes.</div>
       </div>
+
       <div class="faq-item">
-        <div class="faq-pergunta" onclick="toggleFaq(this)">
-          Preciso instalar algum programa no computador? <span class="faq-chevron">▼</span>
-        </div>
-        <div class="faq-resposta">Não. O VotaMap é 100% web — funciona direto no navegador, em qualquer dispositivo. Seus líderes acessam pelo celular para cadastrar apoiadores. Nada para instalar, nada para configurar.</div>
+        <div class="faq-q" onclick="faq(this)">Preciso instalar algum programa? <span class="faq-chev">▼</span></div>
+        <div class="faq-a">Não. O VotaMap é 100% web — funciona no navegador de qualquer dispositivo, computador, tablet ou celular. Seus líderes acessam pelo smartphone para cadastrar apoiadores em campo. Nada para instalar, atualizar ou configurar.</div>
       </div>
+
       <div class="faq-item">
-        <div class="faq-pergunta" onclick="toggleFaq(this)">
-          Como funciona a integração com os dados do TSE? <span class="faq-chevron">▼</span>
-        </div>
-        <div class="faq-resposta">O TSE disponibiliza arquivos JSON com os resultados da apuração por zona e seção eleitoral. Na noite da eleição, o VotaMap busca esses dados periodicamente (a cada 30 minutos) e cruza automaticamente com sua base de líderes por zona. No dia seguinte, você tem um relatório completo mostrando votos obtidos vs. esperados em cada região.</div>
+        <div class="faq-q" onclick="faq(this)">Como funciona a integração com os dados do TSE? <span class="faq-chev">▼</span></div>
+        <div class="faq-a">O TSE disponibiliza arquivos JSON com os resultados da apuração por zona e seção eleitoral. Na noite da eleição, o VotaMap busca automaticamente esses arquivos a cada 30 minutos e cruza com a sua base de líderes por zona eleitoral. No dia seguinte à eleição, você recebe um relatório completo com votos obtidos versus esperados em cada região, detalhado por líder.</div>
       </div>
+
       <div class="faq-item">
-        <div class="faq-pergunta" onclick="toggleFaq(this)">
-          Posso usar para Deputado Federal e Estadual ao mesmo tempo? <span class="faq-chevron">▼</span>
-        </div>
-        <div class="faq-resposta">Cada licença é individual — um candidato por licença. Se você é um chefe de campanha gerenciando múltiplos candidatos, cada um precisará da sua própria licença. Entre em contato para condições especiais de pacotes multi-candidato.</div>
+        <div class="faq-q" onclick="faq(this)">Posso cancelar quando quiser? <span class="faq-chev">▼</span></div>
+        <div class="faq-a">Sim, sem fidelidade e sem multa. Você cancela quando quiser. Seus dados ficam disponíveis para exportação completa por 30 dias após o cancelamento. Recomendamos manter o sistema ativo até após a apuração para aproveitar o módulo de análise de resultados — que é justamente onde o investimento se justifica no longo prazo.</div>
       </div>
+
       <div class="faq-item">
-        <div class="faq-pergunta" onclick="toggleFaq(this)">
-          E se eu precisar cancelar antes do fim do contrato? <span class="faq-chevron">▼</span>
-        </div>
-        <div class="faq-resposta">Sem fidelidade. Você pode cancelar quando quiser, sem multa. Seus dados ficam disponíveis para exportação por 30 dias após o cancelamento. Recomendamos contratar no mínimo até depois da eleição para aproveitar o módulo completo de análise de resultados.</div>
+        <div class="faq-q" onclick="faq(this)">Funciona para Deputado Federal e Estadual? <span class="faq-chev">▼</span></div>
+        <div class="faq-a">Sim. O sistema foi desenvolvido especificamente para os pleitos de 2026: Deputado Federal e Deputado Estadual. A estrutura de zonas e seções eleitorais usada para o cruzamento com o TSE funciona para ambos. Cada licença é por candidato — um sistema isolado e individualizado.</div>
       </div>
+
       <div class="faq-item">
-        <div class="faq-pergunta" onclick="toggleFaq(this)">
-          Tem treinamento para a minha equipe? <span class="faq-chevron">▼</span>
-        </div>
-        <div class="faq-resposta">Todos os planos incluem vídeos tutoriais e documentação. Os planos Profissional e Premium incluem onboarding ao vivo. O Premium inclui ainda 2 horas mensais de consultoria estratégica com nosso time.</div>
+        <div class="faq-q" onclick="faq(this)">Em quanto tempo minha campanha estará ativa? <span class="faq-chev">▼</span></div>
+        <div class="faq-a">Em até 48 horas úteis após a contratação. Nossa equipe faz o onboarding, configura o ambiente do candidato, cadastra os primeiros usuários e treina a equipe. No plano Premium, o onboarding é ao vivo com gestor dedicado. Já no primeiro dia você consegue cadastrar líderes e apoiadores.</div>
       </div>
+
     </div>
   </div>
 </section>
 
-<!-- CTA FINAL -->
+<!-- ═══ CTA FINAL ═══ -->
 <section class="section" id="contato">
   <div class="container">
-    <div class="cta-final reveal">
-      <h2>Comece hoje.<br>As eleições não esperam.</h2>
-      <p>Cada semana sem um sistema organizado é uma semana de vantagem para o seu adversário.<br>Fale conosco agora e tenha sua campanha funcionando em 48 horas.</p>
-      <div class="cta-final-btns">
-        <a href="https://wa.me/5551999999999?text=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20o%20VotaMap%20para%20minha%20campanha%202026" target="_blank" class="btn-primary">
+    <div class="cta-final-wrap reveal">
+      <h2>Sua campanha começa<br>com uma decisão.</h2>
+      <p>Cada semana sem um sistema organizado é uma semana de vantagem<br>para o seu adversário. Fale com nossa equipe agora.</p>
+      <div class="cta-btns">
+        <a href="https://wa.me/5551999999999?text=Ol%C3%A1%2C%20quero%20conhecer%20o%20VotaMap%20para%20minha%20campanha%202026" target="_blank" class="btn-gold">
           💬 Falar no WhatsApp →
         </a>
-        <a href="mailto:contato@votamap.com.br" class="btn-secondary">
-          📧 Enviar e-mail
+        <a href="mailto:contato@votamap.com.br" class="btn-ghost">
+          ✉ Enviar e-mail
         </a>
       </div>
-      <p style="font-size:13px;color:var(--texto-sutil);margin-top:24px">Sem compromisso. Respondemos em até 2 horas em dias úteis.</p>
+      <p class="cta-nota">Respondemos em até 2 horas em dias úteis · Sem compromisso de contratação</p>
     </div>
   </div>
 </section>
 
-<!-- FOOTER -->
+<!-- ═══ FOOTER ═══ -->
 <footer>
-  <div class="container" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;width:100%">
-    <div class="logo" style="font-size:18px">Vota<span>Map</span></div>
-    <div style="font-size:13px;color:var(--texto-sutil)">© 2026 VotaMap · Todos os direitos reservados · Conformidade LGPD</div>
-    <div style="font-size:13px;color:var(--texto-sutil)">contato@votamap.com.br</div>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="logo" style="font-size:18px">
+        <div class="logo-icon" style="width:26px;height:26px;font-size:13px">🗳</div>
+        Vota<span>Map</span>
+      </div>
+      <span>© 2026 VotaMap · Todos os direitos reservados</span>
+      <span>Conformidade LGPD · Res. TSE 23.732/2024 · Dados no Brasil</span>
+      <span>contato@votamap.com.br</span>
+    </div>
   </div>
 </footer>
 
 <script>
-  // Scroll Reveal
-  const reveals = document.querySelectorAll('.reveal');
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
-  }, { threshold: 0.1 });
-  reveals.forEach(r => observer.observe(r));
+// Scroll Reveal
+const obs = new IntersectionObserver(
+  entries => entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); }),
+  { threshold: 0.08 }
+);
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 
-  // FAQ
-  function toggleFaq(el) {
-    const item = el.closest('.faq-item');
-    const isOpen = item.classList.contains('open');
-    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
-    if (!isOpen) item.classList.add('open');
-  }
-
-  // Smooth CTA tracking (placeholder)
-  document.querySelectorAll('a[href="#planos"]').forEach(a => {
-    a.addEventListener('click', () => { console.log('CTA click: planos'); });
-  });
+// FAQ
+function faq(el) {
+  const item = el.closest('.faq-item');
+  const open = item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+  if (!open) item.classList.add('open');
+}
 </script>
 </body>
 </html>
