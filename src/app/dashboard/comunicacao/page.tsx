@@ -5,17 +5,10 @@ import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
 type Disparo = {
-  id: string
-  canal: string
-  assunto: string
-  mensagem: string
-  total_destinatarios: number
-  total_enviados: number
-  total_erros: number
-  status: string
-  criado_em: string
+  id: string; canal: string; assunto: string; mensagem: string
+  total_destinatarios: number; total_enviados: number; total_erros: number
+  status: string; criado_em: string
 }
-
 type Lider = { id: string; nome: string; cidade: string }
 type Apoiador = { id: string; nome: string; email: string; telefone: string; whatsapp: string; lider_id: string }
 
@@ -33,14 +26,22 @@ export default function ComunicacaoPage() {
   const supabase = createClient()
 
   const [form, setForm] = useState({
-    canal: 'email',
-    assunto: '',
-    mensagem: '',
-    filtro: 'todos',
-    filtro_lider_id: '',
-    filtro_regiao: '',
-    remetente_nome: '',
+    canal: 'email', assunto: '', mensagem: '',
+    filtro: 'todos', filtro_lider_id: '', remetente_nome: '',
   })
+
+  const canalInfo: Record<string,{label:string;cor:string;icone:string;status:string}> = {
+    email:    { label:'E-mail',   cor:'#6ba3d6', icone:'✉️', status:'ativo' },
+    sms:      { label:'SMS',      cor:'#C9A84C', icone:'📱', status:'ativo' },
+    whatsapp: { label:'WhatsApp', cor:'#5eead4', icone:'💬', status:'em breve' },
+  }
+
+  const statusInfo: Record<string,{label:string;cor:string}> = {
+    pendente:  { label:'Pendente',  cor:'#8FA4C0' },
+    enviando:  { label:'Enviando',  cor:'#C9A84C' },
+    concluido: { label:'Concluído', cor:'#22c55e' },
+    erro:      { label:'Erro',      cor:'#e74c3c' },
+  }
 
   useEffect(() => {
     async function carregar() {
@@ -57,15 +58,13 @@ export default function ComunicacaoPage() {
     carregar()
   }, [])
 
-  useEffect(() => {
-    contarDestinatarios()
-  }, [form.filtro, form.filtro_lider_id, form.filtro_regiao, form.canal])
+  useEffect(() => { contarDestinatarios() }, [form.filtro, form.filtro_lider_id, form.canal])
 
   async function contarDestinatarios() {
     let query = supabase.from('apoiadores').select('id', { count: 'exact', head: true })
     if (form.filtro === 'lider' && form.filtro_lider_id) query = query.eq('lider_id', form.filtro_lider_id)
     if (form.canal === 'email') query = query.not('email', 'is', null)
-    if (form.canal === 'sms' || form.canal === 'whatsapp') query = query.not('telefone', 'is', null)
+    if (form.canal === 'sms') query = query.not('telefone', 'is', null)
     const { count } = await query
     setPreviewCount(count || 0)
   }
@@ -74,30 +73,25 @@ export default function ComunicacaoPage() {
     let query = supabase.from('apoiadores').select('id, nome, email, telefone, whatsapp, lider_id')
     if (form.filtro === 'lider' && form.filtro_lider_id) query = query.eq('lider_id', form.filtro_lider_id)
     if (form.canal === 'email') query = query.not('email', 'is', null)
-    if (form.canal === 'sms' || form.canal === 'whatsapp') query = query.not('telefone', 'is', null)
+    if (form.canal === 'sms') query = query.not('telefone', 'is', null)
     const { data } = await query
     return data || []
   }
 
   async function handleEnviar() {
     if (!form.mensagem) { setErro('Digite a mensagem'); return }
-    if (form.canal === 'email' && !form.assunto) { setErro('Informe o assunto do e-mail'); return }
-    if (previewCount === 0) { setErro('Nenhum destinatário encontrado com os filtros selecionados'); return }
+    if (form.canal === 'email' && !form.assunto) { setErro('Informe o assunto'); return }
+    if (previewCount === 0) { setErro('Nenhum destinatário encontrado'); return }
     if (!confirm(`Confirma o envio para ${previewCount} destinatários?`)) return
 
     setEnviando(true); setErro(''); setSucesso('')
     setProgresso('Buscando destinatários...')
-
     const destinatarios = await buscarDestinatarios()
 
     const { data: disparo } = await supabase.from('disparos').insert({
-      canal: form.canal,
-      assunto: form.assunto,
-      mensagem: form.mensagem,
-      total_destinatarios: destinatarios.length,
-      status: 'enviando',
+      canal: form.canal, assunto: form.assunto, mensagem: form.mensagem,
+      total_destinatarios: destinatarios.length, status: 'enviando',
       filtro_lider_id: form.filtro_lider_id || null,
-      filtro_regiao: form.filtro_regiao || null,
     }).select().single()
 
     try {
@@ -108,36 +102,41 @@ export default function ComunicacaoPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             destinatarios: destinatarios.map(d => ({ email: d.email, nome: d.nome })),
-            assunto: form.assunto,
-            mensagem: form.mensagem,
+            assunto: form.assunto, mensagem: form.mensagem,
             remetente_nome: form.remetente_nome,
           }),
         })
         const resultado = await res.json()
+        if (disparo) await supabase.from('disparos').update({ total_enviados: resultado.enviados || 0, total_erros: resultado.erros || 0, status: 'concluido' }).eq('id', disparo.id)
+        setSucesso(`✓ ${resultado.enviados} e-mails enviados!${resultado.erros > 0 ? ` (${resultado.erros} erros)` : ''}`)
 
-        if (disparo) {
-          await supabase.from('disparos').update({
-            total_enviados: resultado.enviados || 0,
-            total_erros: resultado.erros || 0,
-            status: 'concluido',
-          }).eq('id', disparo.id)
-        }
+      } else if (form.canal === 'sms') {
+        setProgresso(`Enviando SMS para ${destinatarios.length} pessoas...`)
+        const res = await fetch('/api/comunicacao/sms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            destinatarios: destinatarios.map(d => ({ telefone: d.telefone, nome: d.nome })),
+            mensagem: form.mensagem,
+          }),
+        })
+        const resultado = await res.json()
+        if (disparo) await supabase.from('disparos').update({ total_enviados: resultado.enviados || 0, total_erros: resultado.erros || 0, status: 'concluido' }).eq('id', disparo.id)
+        setSucesso(`✓ ${resultado.enviados} SMS enviados!${resultado.erros > 0 ? ` (${resultado.erros} erros)` : ''}`)
 
-        setSucesso(`✓ ${resultado.enviados} e-mails enviados com sucesso!${resultado.erros > 0 ? ` (${resultado.erros} erros)` : ''}`)
       } else {
-        await supabase.from('disparos').update({ status: 'concluido' }).eq('id', disparo?.id)
-        setSucesso(`Disparo registrado! Integração com ${form.canal.toUpperCase()} em breve.`)
+        if (disparo) await supabase.from('disparos').update({ status: 'concluido' }).eq('id', disparo.id)
+        setSucesso('Disparo registrado! WhatsApp em breve.')
       }
 
       setModalAberto(false)
-      setForm({ canal:'email', assunto:'', mensagem:'', filtro:'todos', filtro_lider_id:'', filtro_regiao:'', remetente_nome:'' })
+      setForm({ canal:'email', assunto:'', mensagem:'', filtro:'todos', filtro_lider_id:'', remetente_nome:'' })
       const { data } = await supabase.from('disparos').select('*').order('criado_em', { ascending: false })
       if (data) setDisparos(data)
     } catch (e: any) {
-      setErro('Erro ao enviar: ' + e.message)
+      setErro('Erro: ' + e.message)
       if (disparo) await supabase.from('disparos').update({ status: 'erro' }).eq('id', disparo.id)
     }
-
     setProgresso(''); setEnviando(false)
     setTimeout(() => setSucesso(''), 5000)
   }
@@ -145,18 +144,6 @@ export default function ComunicacaoPage() {
   const inputStyle = { padding:'10px 14px', background:'#0B1F3A', border:'1px solid #1C3558', borderRadius:'8px', color:'#E8EDF5', fontSize:'14px', outline:'none', fontFamily:'Inter, sans-serif', width:'100%', boxSizing:'border-box' as const }
   const labelStyle = { fontSize:'11px', fontWeight:600 as const, letterSpacing:'1px', textTransform:'uppercase' as const, color:'#8FA4C0', marginBottom:'6px', display:'block' as const }
 
-  const canalInfo: Record<string,{label:string;cor:string;icone:string;status:string}> = {
-    email:    { label:'E-mail',    cor:'#6ba3d6', icone:'✉️',  status:'ativo' },
-    sms:      { label:'SMS',       cor:'#C9A84C', icone:'📱',  status:'em breve' },
-    whatsapp: { label:'WhatsApp',  cor:'#5eead4', icone:'💬',  status:'em breve' },
-  }
-
-  const statusInfo: Record<string,{label:string;cor:string}> = {
-    pendente:  { label:'Pendente',  cor:'#8FA4C0' },
-    enviando:  { label:'Enviando',  cor:'#C9A84C' },
-    concluido: { label:'Concluído', cor:'#22c55e' },
-    erro:      { label:'Erro',      cor:'#e74c3c' },
-  }
   return (
     <div style={{ minHeight:'100vh', background:'#0B1F3A', fontFamily:'Inter, system-ui, sans-serif' }}>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -168,8 +155,7 @@ export default function ComunicacaoPage() {
           <div style={{ width:'1px', height:'20px', background:'#1C3558' }} />
           <span style={{ fontSize:'17px', fontWeight:700, color:'#FFFFFF', letterSpacing:'-0.3px' }}>Vota<span style={{ color:'#C9A84C' }}>Map</span></span>
         </div>
-        <button onClick={() => { setModalAberto(true); setErro('') }}
-          style={{ background:'linear-gradient(135deg, #E8C87A, #A07830)', border:'none', borderRadius:'8px', color:'#0B1F3A', fontSize:'13px', fontWeight:600, padding:'9px 18px', cursor:'pointer', fontFamily:'Inter, sans-serif' }}>
+        <button onClick={() => { setModalAberto(true); setErro('') }} style={{ background:'linear-gradient(135deg, #E8C87A, #A07830)', border:'none', borderRadius:'8px', color:'#0B1F3A', fontSize:'13px', fontWeight:600, padding:'9px 18px', cursor:'pointer', fontFamily:'Inter, sans-serif' }}>
           + Novo Disparo
         </button>
       </nav>
@@ -184,7 +170,6 @@ export default function ComunicacaoPage() {
           <p style={{ fontSize:'14px', color:'#8FA4C0' }}>Envie mensagens segmentadas para sua base eleitoral</p>
         </div>
 
-        {/* CANAIS */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'14px', marginBottom:'28px' }}>
           {Object.entries(canalInfo).map(([key, info]) => (
             <div key={key} style={{ background:'#0F2040', border:`1px solid ${info.status === 'ativo' ? 'rgba(201,168,76,0.2)' : '#1C3558'}`, borderRadius:'10px', padding:'20px', opacity: info.status === 'ativo' ? 1 : 0.6 }}>
@@ -196,7 +181,7 @@ export default function ComunicacaoPage() {
               </div>
               <div style={{ fontSize:'15px', fontWeight:600, color:'#E8EDF5', marginTop:'12px' }}>{info.label}</div>
               <div style={{ fontSize:'12px', color:'#8FA4C0', marginTop:'4px' }}>
-                {key === 'email' ? 'Via Resend · 3.000/mês grátis' : key === 'sms' ? 'Via Twilio · em configuração' : 'Via Evolution API · em configuração'}
+                {key === 'email' ? 'Via Resend · 3.000/mês grátis' : key === 'sms' ? 'Via Twilio · ativo' : 'Via Evolution API · em breve'}
               </div>
             </div>
           ))}
@@ -204,7 +189,6 @@ export default function ComunicacaoPage() {
 
         {sucesso && <div style={{ background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.3)', borderRadius:'8px', padding:'12px 16px', fontSize:'13px', color:'#22c55e', marginBottom:'16px' }}>{sucesso}</div>}
 
-        {/* HISTÓRICO */}
         <div style={{ fontSize:'13px', fontWeight:600, color:'#8FA4C0', textTransform:'uppercase', letterSpacing:'1.5px', marginBottom:'14px' }}>Histórico de disparos</div>
 
         {loading ? (
@@ -238,7 +222,7 @@ export default function ComunicacaoPage() {
                   <div style={{ fontSize:'13px', color:'#22c55e', fontWeight:500 }}>{d.total_enviados}</div>
                   <div style={{ fontSize:'13px', color: d.total_erros > 0 ? '#e74c3c' : '#8FA4C0' }}>{d.total_erros}</div>
                   <div>
-                    <span style={{ fontSize:'11px', fontWeight:600, padding:'3px 10px', borderRadius:'100px', background:`rgba(${status?.cor === '#22c55e' ? '34,197,94' : status?.cor === '#e74c3c' ? '192,57,43' : status?.cor === '#C9A84C' ? '201,168,76' : '143,164,192'},0.1)`, color: status?.cor }}>
+                    <span style={{ fontSize:'11px', fontWeight:600, padding:'3px 10px', borderRadius:'100px', background:`rgba(${status?.cor === '#22c55e' ? '34,197,94' : status?.cor === '#e74c3c' ? '192,57,43' : '201,168,76'},0.1)`, color: status?.cor }}>
                       {status?.label}
                     </span>
                   </div>
@@ -250,7 +234,6 @@ export default function ComunicacaoPage() {
         )}
       </main>
 
-      {/* MODAL */}
       {modalAberto && (
         <div style={{ position:'fixed', inset:0, zIndex:200, background:'rgba(0,0,0,0.75)', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px', overflowY:'auto' }}>
           <div style={{ background:'#0F2040', border:'1px solid rgba(201,168,76,0.2)', borderRadius:'16px', padding:'32px', width:'100%', maxWidth:'560px', position:'relative', margin:'auto' }}>
@@ -260,10 +243,8 @@ export default function ComunicacaoPage() {
               <button onClick={() => setModalAberto(false)} style={{ background:'transparent', border:'none', color:'#8FA4C0', cursor:'pointer', fontSize:'20px' }}>✕</button>
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:'14px' }}>
-
-              {/* CANAL */}
               <div>
-                <label style={labelStyle}>Canal de envio *</label>
+                <label style={labelStyle}>Canal *</label>
                 <div style={{ display:'flex', gap:'8px' }}>
                   {Object.entries(canalInfo).map(([key, info]) => (
                     <button key={key} onClick={() => setForm(p=>({...p,canal:key}))}
@@ -276,11 +257,10 @@ export default function ComunicacaoPage() {
                 </div>
               </div>
 
-              {/* SEGMENTAÇÃO */}
               <div>
                 <label style={labelStyle}>Enviar para</label>
-                <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' as const }}>
-                  {[['todos','Todos os apoiadores'],['lider','Por líder']].map(([key, label]) => (
+                <div style={{ display:'flex', gap:'8px' }}>
+                  {[['todos','Todos'],['lider','Por líder']].map(([key, label]) => (
                     <button key={key} onClick={() => setForm(p=>({...p,filtro:key,filtro_lider_id:''}))}
                       style={{ padding:'8px 16px', borderRadius:'100px', border:`1px solid ${form.filtro === key ? 'rgba(201,168,76,0.5)' : '#1C3558'}`, background: form.filtro === key ? 'rgba(201,168,76,0.1)' : 'transparent', color: form.filtro === key ? '#C9A84C' : '#8FA4C0', fontSize:'13px', cursor:'pointer', fontFamily:'Inter, sans-serif', fontWeight: form.filtro === key ? 600 : 400 }}>
                       {label}
@@ -291,7 +271,7 @@ export default function ComunicacaoPage() {
 
               {form.filtro === 'lider' && (
                 <div>
-                  <label style={labelStyle}>Selecione o líder</label>
+                  <label style={labelStyle}>Líder</label>
                   <select value={form.filtro_lider_id} onChange={e => setForm(p=>({...p,filtro_lider_id:e.target.value}))} style={{ ...inputStyle, cursor:'pointer' }} onFocus={e=>e.target.style.borderColor='#C9A84C'} onBlur={e=>e.target.style.borderColor='#1C3558'}>
                     <option value="">Selecione...</option>
                     {lideres.map(l => <option key={l.id} value={l.id}>{l.nome} — {l.cidade}</option>)}
@@ -299,25 +279,27 @@ export default function ComunicacaoPage() {
                 </div>
               )}
 
-              {/* PREVIEW COUNT */}
               <div style={{ background:'rgba(201,168,76,0.05)', border:'1px solid rgba(201,168,76,0.15)', borderRadius:'8px', padding:'12px 16px', display:'flex', alignItems:'center', gap:'10px' }}>
                 <div style={{ fontSize:'22px', fontWeight:700, color:'#C9A84C' }}>{previewCount}</div>
-                <div style={{ fontSize:'13px', color:'#8FA4C0' }}>destinatário{previewCount !== 1 ? 's' : ''} com {form.canal === 'email' ? 'e-mail' : 'telefone'} cadastrado{previewCount !== 1 ? 's' : ''}</div>
+                <div style={{ fontSize:'13px', color:'#8FA4C0' }}>destinatário{previewCount !== 1 ? 's' : ''} com contato cadastrado</div>
               </div>
 
-              <div><label style={labelStyle}>Nome do remetente</label>
+              <div>
+                <label style={labelStyle}>Nome do remetente</label>
                 <input value={form.remetente_nome} onChange={e => setForm(p=>({...p,remetente_nome:e.target.value}))} placeholder="Ex: Campanha João Silva" style={inputStyle} onFocus={e=>e.target.style.borderColor='#C9A84C'} onBlur={e=>e.target.style.borderColor='#1C3558'} />
               </div>
 
               {form.canal === 'email' && (
-                <div><label style={labelStyle}>Assunto *</label>
+                <div>
+                  <label style={labelStyle}>Assunto *</label>
                   <input value={form.assunto} onChange={e => setForm(p=>({...p,assunto:e.target.value}))} placeholder="Assunto do e-mail" style={inputStyle} onFocus={e=>e.target.style.borderColor='#C9A84C'} onBlur={e=>e.target.style.borderColor='#1C3558'} />
                 </div>
               )}
 
-              <div><label style={labelStyle}>Mensagem *</label>
-                <textarea value={form.mensagem} onChange={e => setForm(p=>({...p,mensagem:e.target.value}))} placeholder="Digite sua mensagem aqui..." rows={5} style={{ ...inputStyle, resize:'vertical' as const }} onFocus={e=>e.target.style.borderColor='#C9A84C'} onBlur={e=>e.target.style.borderColor='#1C3558'} />
-                <div style={{ fontSize:'11px', color:'#3D5470', marginTop:'4px' }}>{form.mensagem.length} caracteres</div>
+              <div>
+                <label style={labelStyle}>Mensagem *</label>
+                <textarea value={form.mensagem} onChange={e => setForm(p=>({...p,mensagem:e.target.value}))} placeholder="Digite sua mensagem..." rows={5} style={{ ...inputStyle, resize:'vertical' as const }} onFocus={e=>e.target.style.borderColor='#C9A84C'} onBlur={e=>e.target.style.borderColor='#1C3558'} />
+                <div style={{ fontSize:'11px', color:'#3D5470', marginTop:'4px' }}>{form.mensagem.length} caracteres {form.canal === 'sms' && form.mensagem.length > 160 && <span style={{ color:'#e74c3c' }}>· SMS será dividido em {Math.ceil(form.mensagem.length/160)} partes</span>}</div>
               </div>
 
               {erro && <div style={{ background:'rgba(192,57,43,0.1)', border:'1px solid rgba(192,57,43,0.3)', borderRadius:'8px', padding:'10px 14px', fontSize:'13px', color:'#e74c3c' }}>{erro}</div>}
