@@ -4,12 +4,15 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
+import { validarCpf } from '@/lib/validarCpf'
+
 export default function NovoLiderPage() {
   const router = useRouter()
   const supabase = createClient()
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
   const [buscandoCep, setBuscandoCep] = useState(false)
+  const [cpfInvalido, setCpfInvalido] = useState(false)
 
   const [form, setForm] = useState({
     nome: '', cpf: '', email: '', telefone: '', whatsapp: '',
@@ -77,12 +80,19 @@ export default function NovoLiderPage() {
     setSalvando(true)
     setErro('')
 
+    const cpfLimpo = form.cpf.replace(/\D/g, '')
+if (cpfLimpo.length > 0 && !validarCpf(cpfLimpo)) {
+  setErro('CPF inválido. Corrija antes de salvar.')
+  setSalvando(false)
+  return
+}
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
 
     const { error } = await supabase.from('lideres_regionais').insert({
       nome: form.nome,
-      cpf: form.cpf,
+      cpf: form.cpf.replace(/\D/g, ''),
       email: form.email,
       telefone: form.telefone,
       whatsapp: form.whatsapp,
@@ -154,7 +164,31 @@ export default function NovoLiderPage() {
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
                 <label style={labelStyle}>CPF</label>
-                <input value={form.cpf} onChange={e => handleChange('cpf', e.target.value)} placeholder="000.000.000-00" style={inputStyle} onFocus={e => e.target.style.borderColor='#C9A84C'} onBlur={e => e.target.style.borderColor='#1C3558'} />
+                <input
+  value={form.cpf}
+  onChange={e => handleChange('cpf', e.target.value)}
+  placeholder="000.000.000-00"
+  style={{
+    ...inputStyle,
+    borderColor: cpfInvalido ? '#e74c3c' : '#1C3558'
+  }}
+  onFocus={e => e.target.style.borderColor = '#C9A84C'}
+  onBlur={e => {
+    const cpfLimpo = form.cpf.replace(/\D/g, '')
+    if (cpfLimpo.length === 11 && !validarCpf(cpfLimpo)) {
+      setCpfInvalido(true)
+      e.target.style.borderColor = '#e74c3c'
+    } else {
+      setCpfInvalido(false)
+      e.target.style.borderColor = '#1C3558'
+    }
+  }}
+/>
+{cpfInvalido && (
+  <span style={{ fontSize: '12px', color: '#e74c3c', marginTop: '4px' }}>
+    CPF inválido. Verifique os números digitados.
+  </span>
+)}
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
                 <label style={labelStyle}>E-mail</label>
