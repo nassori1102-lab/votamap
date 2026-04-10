@@ -112,16 +112,15 @@ export default function LiderDetalhePage() {
   async function handleFotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !lider) return
-    setUploadandoFoto(true)
-    const ext = file.name.split('.').pop()
-    const path = `${lider.id}.${ext}`
-    const { error } = await supabase.storage.from('fotos-lideres').upload(path, file, { upsert: true })
-    if (error) { setErro('Erro no upload: ' + error.message); setUploadandoFoto(false); return }
-    const { data: urlData } = supabase.storage.from('fotos-lideres').getPublicUrl(path)
-    const url = urlData.publicUrl + '?t=' + Date.now()
-    await supabase.from('lideres_regionais').update({ foto_url: url }).eq('id', lider.id)
-    setLider(prev => prev ? { ...prev, foto_url: url } : prev)
-    setForm(prev => ({ ...prev, foto_url: url }))
+    setUploadandoFoto(true); setErro('')
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('lider_id', lider.id)
+    const res = await fetch('/api/upload/foto-lider', { method: 'POST', body: fd })
+    const result = await res.json()
+    if (!res.ok) { setErro('Erro no upload: ' + result.error); setUploadandoFoto(false); return }
+    setLider(prev => prev ? { ...prev, foto_url: result.url } : prev)
+    setForm(prev => ({ ...prev, foto_url: result.url }))
     setUploadandoFoto(false)
   }
 
