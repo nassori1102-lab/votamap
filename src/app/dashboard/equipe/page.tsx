@@ -22,7 +22,7 @@ export default function EquipePage() {
   const [erro, setErro] = useState('')
   const [sucesso, setSucesso] = useState('')
   const [form, setForm] = useState({
-    nome: '', email: '', senha: '', perfil: 'lider_regional', cargo: '',
+    nome: '', email: '', senha: '', perfil: 'lider', cargo: '',
   })
   const router = useRouter()
   const supabase = createClient()
@@ -82,10 +82,10 @@ export default function EquipePage() {
   }
 
   const perfis: Record<string, { label: string; cor: string; desc: string }> = {
-    admin:           { label:'Administrador',    cor:'#C9A84C', desc:'Acesso total ao sistema' },
-    chefe_campanha:  { label:'Chefe de Campanha', cor:'#6ba3d6', desc:'Acesso total exceto licenças' },
-    lider_regional:  { label:'Líder Regional',   cor:'#5eead4', desc:'Acesso aos próprios cadastros' },
-    contador:        { label:'Contador',          cor:'#86efac', desc:'Acesso exclusivo ao financeiro' },
+    coordenador: { label:'Coordenador de Campanha', cor:'#C9A84C', desc:'Acesso total ao sistema, comunicação e créditos' },
+    marketing:   { label:'Marketing',               cor:'#6ba3d6', desc:'Pode disparar mensagens e criar eventos' },
+    financeiro:  { label:'Financeiro',              cor:'#86efac', desc:'Acesso exclusivo ao módulo financeiro' },
+    lider:       { label:'Líder Regional',          cor:'#5eead4', desc:'Acesso aos próprios cadastros' },
   }
 
   const inputStyle = { padding:'10px 14px', background:'#0B1F3A', border:'1px solid #1C3558', borderRadius:'8px', color:'#E8EDF5', fontSize:'14px', outline:'none', fontFamily:'Inter, sans-serif', width:'100%', boxSizing:'border-box' as const }
@@ -180,13 +180,24 @@ export default function EquipePage() {
           </div>
         )}
 
-        {/* AVISO CONTADOR */}
-        <div style={{ background:'rgba(134,239,172,0.05)', border:'1px solid rgba(134,239,172,0.15)', borderRadius:'10px', padding:'16px 20px', marginTop:'20px', display:'flex', gap:'12px', alignItems:'flex-start' }}>
-          <div style={{ fontSize:'20px', flexShrink:0 }}>💡</div>
-          <div>
-            <div style={{ fontSize:'13px', fontWeight:600, color:'#86efac', marginBottom:'4px' }}>Acesso do Contador</div>
-            <div style={{ fontSize:'12px', color:'#8FA4C0', lineHeight:1.7 }}>
-              Ao cadastrar um membro com perfil <strong style={{ color:'#86efac' }}>Contador</strong>, ele terá acesso exclusivo ao módulo financeiro — despesas, receitas e relatório TSE. Nenhum dado de líderes ou apoiadores será visível para ele.
+        {/* AVISOS DE PERFIL */}
+        <div style={{ display:'flex', flexDirection:'column', gap:'10px', marginTop:'20px' }}>
+          <div style={{ background:'rgba(201,168,76,0.05)', border:'1px solid rgba(201,168,76,0.15)', borderRadius:'10px', padding:'14px 18px', display:'flex', gap:'12px', alignItems:'flex-start' }}>
+            <div style={{ fontSize:'18px', flexShrink:0 }}>💬</div>
+            <div>
+              <div style={{ fontSize:'13px', fontWeight:600, color:'#C9A84C', marginBottom:'3px' }}>Comunicação — Coordenador e Marketing</div>
+              <div style={{ fontSize:'12px', color:'#8FA4C0', lineHeight:1.7 }}>
+                Apenas membros com perfil <strong style={{ color:'#C9A84C' }}>Coordenador de Campanha</strong> ou <strong style={{ color:'#6ba3d6' }}>Marketing</strong> podem disparar mensagens (SMS, e-mail e WhatsApp) para apoiadores e líderes.
+              </div>
+            </div>
+          </div>
+          <div style={{ background:'rgba(134,239,172,0.05)', border:'1px solid rgba(134,239,172,0.15)', borderRadius:'10px', padding:'14px 18px', display:'flex', gap:'12px', alignItems:'flex-start' }}>
+            <div style={{ fontSize:'18px', flexShrink:0 }}>💼</div>
+            <div>
+              <div style={{ fontSize:'13px', fontWeight:600, color:'#86efac', marginBottom:'3px' }}>Acesso do Financeiro</div>
+              <div style={{ fontSize:'12px', color:'#8FA4C0', lineHeight:1.7 }}>
+                Membros com perfil <strong style={{ color:'#86efac' }}>Financeiro</strong> têm acesso exclusivo ao módulo financeiro — despesas, receitas e relatório TSE. Nenhum dado de líderes ou apoiadores será visível.
+              </div>
             </div>
           </div>
         </div>
