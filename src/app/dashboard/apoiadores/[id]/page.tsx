@@ -304,16 +304,18 @@ export default function ApoiadorDetalhePage() {
               <Campo label="Seção Eleitoral" campo="secao_eleitoral" {...campoProps} />
               <Campo label="Local de Votação" campo="local_votacao" {...campoProps} />
               <div>
-                <div style={labelStyle}>Meta de Votos</div>
+                <div style={labelStyle}>Estimativa de Votos</div>
+                <div style={{ fontSize:'11px', color:'#3D5470', marginBottom:'4px' }}>Quantos votos este apoiador tem potencial de trazer</div>
                 {editando ? (
                   <input type="number" min="0" value={form.meta_votos ?? 0}
                     onChange={e => setForm(prev => ({ ...prev, meta_votos: parseInt(e.target.value) || 0 }))}
+                    placeholder="Ex: 20"
                     style={{ ...inputStyle, marginTop:'4px' }}
                     onFocus={e => e.target.style.borderColor='#C9A84C'}
                     onBlur={e => e.target.style.borderColor='#1C3558'} />
                 ) : (
                   <div style={{ fontSize:'14px', color: apoiador.meta_votos ? '#86efac' : '#E8EDF5', marginTop:'4px', fontWeight: apoiador.meta_votos ? 600 : 400 }}>
-                    {apoiador.meta_votos ? `${apoiador.meta_votos.toLocaleString('pt-BR')} votos` : '—'}
+                    {apoiador.meta_votos ? `~${apoiador.meta_votos.toLocaleString('pt-BR')} votos estimados` : 'Não definida'}
                   </div>
                 )}
               </div>

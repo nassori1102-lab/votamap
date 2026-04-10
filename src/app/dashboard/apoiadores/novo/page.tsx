@@ -275,12 +275,11 @@ export default function NovoApoiadorPage() {
               </div>
             </div>
 
-            {/* META DE VOTOS */}
-            <div style={{ display:'grid', gridTemplateColumns:col2, gap:'16px', marginBottom:'16px' }}>
-              <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
-                <label style={labelStyle}>Meta de Votos</label>
-                <input type="number" min="0" value={form.meta_votos} onChange={e => handleChange('meta_votos', e.target.value)} placeholder="Ex: 50" style={inputStyle} onFocus={e => e.target.style.borderColor='#C9A84C'} onBlur={e => e.target.style.borderColor='#1C3558'} />
-              </div>
+            {/* ESTIMATIVA DE VOTOS */}
+            <div style={{ display:'flex', flexDirection:'column', gap:'6px', marginBottom:'16px' }}>
+              <label style={labelStyle}>Estimativa de Votos</label>
+              <div style={{ fontSize:'11px', color:'#3D5470', marginBottom:'2px' }}>Quantos votos este apoiador tem potencial de trazer</div>
+              <input type="number" min="0" value={form.meta_votos} onChange={e => handleChange('meta_votos', e.target.value)} placeholder="Ex: 20" style={inputStyle} onFocus={e => e.target.style.borderColor='#C9A84C'} onBlur={e => e.target.style.borderColor='#1C3558'} />
             </div>
 
             {/* TÍTULO DE ELEITOR */}
