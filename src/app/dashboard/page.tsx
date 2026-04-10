@@ -26,7 +26,7 @@ export default function Dashboard() {
         .eq('id', user.id)
         .single()
 
-      if (perfil?.perfil === 'contador') {
+      if (perfil?.perfil === 'financeiro') {
         router.push('/dashboard/financeiro')
         return
       }
@@ -36,7 +36,7 @@ export default function Dashboard() {
         supabase.from('apoiadores').select('*', { count:'exact', head:true }),
         supabase.from('lideres_regionais').select('cidade').eq('ativo', true),
         supabase.from('lideres_regionais').select('*', { count:'exact', head:true }).eq('ativo', true),
-        supabase.from('apoiadores').select('meta_votos'),
+        supabase.from('lideres_regionais').select('meta_votos').eq('ativo', true),
       ])
       const cidadesUnicas = new Set(regioes?.map((l: any) => l.cidade) || []).size
       const metaTotal = (metasData || []).reduce((acc: number, a: any) => acc + (a.meta_votos || 0), 0)
@@ -61,7 +61,8 @@ export default function Dashboard() {
     { titulo:'Candidato', desc:'Perfil, cargo e dados da candidatura', icone:'🏛️', href:'/dashboard/candidato', ativo:true },
     { titulo:'Líderes Regionais', desc:'Cadastre e gerencie sua rede de líderes', icone:'👥', href:'/dashboard/lideres', ativo:true },
     { titulo:'Apoiadores', desc:'Base eleitoral cadastrada pelos líderes', icone:'🗳', href:'/dashboard/apoiadores', ativo:true },
-    { titulo:'Metas de Votos', desc:'Metas por apoiador e panorama por zona', icone:'🎯', href:'/dashboard/metas', ativo:true },
+    { titulo:'Previsão de Votos', desc:'Metas dos líderes e estimativas por apoiador', icone:'🎯', href:'/dashboard/metas', ativo:true },
+    { titulo:'Acompanhamento', desc:'Metas semanais de captação por líder', icone:'📋', href:'/dashboard/acompanhamento', ativo:true },
     { titulo:'Ranking de Líderes', desc:'Pontuação e gamificação da equipe', icone:'🏆', href:'/dashboard/ranking', ativo:true },
     { titulo:'Mapa de Cobertura', desc:'Visualize regiões com e sem líderes', icone:'🗺️', href:'/dashboard/mapa', ativo:true },
     { titulo:'Equipe', desc:'Gerencie acessos da equipe de campanha', icone:'🔐', href:'/dashboard/equipe', ativo:true },
@@ -76,7 +77,7 @@ export default function Dashboard() {
     { label:'Líderes Cadastrados', valor: metricas.lideres, sub: `${metricas.lideres_ativos} ativos`, cor:'#C9A84C', icone:'👥' },
     { label:'Apoiadores', valor: metricas.apoiadores, sub:'na base eleitoral', cor:'#6ba3d6', icone:'🗳' },
     { label:'Cidades Cobertas', valor: metricas.regioes, sub:'com líderes ativos', cor:'#5eead4', icone:'🗺️' },
-    { label:'Meta de Votos', valor: metricas.meta_total > 0 ? metricas.meta_total.toLocaleString('pt-BR') : '—', sub: metricas.meta_total > 0 ? 'votos projetados' : 'defina metas nos apoiadores', cor:'#86efac', icone:'🎯' },
+    { label:'Meta dos Líderes', valor: metricas.meta_total > 0 ? metricas.meta_total.toLocaleString('pt-BR') : '—', sub: metricas.meta_total > 0 ? 'votos comprometidos pelos líderes' : 'defina metas nos líderes', cor:'#86efac', icone:'🎯' },
   ]
 
   return (
