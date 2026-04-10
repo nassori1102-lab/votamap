@@ -112,15 +112,20 @@ export default function LiderDetalhePage() {
   async function handleFotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !lider) return
+    if (file.size > 3 * 1024 * 1024) { setErro('Foto muito grande. Use uma imagem de até 3 MB.'); return }
     setUploadandoFoto(true); setErro('')
-    const fd = new FormData()
-    fd.append('file', file)
-    fd.append('lider_id', lider.id)
-    const res = await fetch('/api/upload/foto-lider', { method: 'POST', body: fd })
-    const result = await res.json()
-    if (!res.ok) { setErro('Erro no upload: ' + result.error); setUploadandoFoto(false); return }
-    setLider(prev => prev ? { ...prev, foto_url: result.url } : prev)
-    setForm(prev => ({ ...prev, foto_url: result.url }))
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('lider_id', lider.id)
+      const res = await fetch('/api/upload/foto-lider', { method: 'POST', body: fd })
+      const result = await res.json()
+      if (!res.ok) { setErro('Erro no upload: ' + (result.error || res.statusText)); setUploadandoFoto(false); return }
+      setLider(prev => prev ? { ...prev, foto_url: result.url } : prev)
+      setForm(prev => ({ ...prev, foto_url: result.url }))
+    } catch (err: unknown) {
+      setErro('Erro de conexão: ' + (err instanceof Error ? err.message : 'tente novamente'))
+    }
     setUploadandoFoto(false)
   }
 
