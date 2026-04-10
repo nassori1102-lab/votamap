@@ -16,6 +16,7 @@ type Lider = {
   zona_eleitoral: string
   ativo: boolean
   criado_em: string
+  foto_url?: string
 }
 
 export default function LideresPage() {
@@ -141,8 +142,10 @@ export default function LideresPage() {
               >
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'16px' }}>
                   <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
-                    <div style={{ width:'44px', height:'44px', borderRadius:'50%', background:'rgba(201,168,76,0.15)', border:'1px solid rgba(201,168,76,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'16px', fontWeight:700, color:'#C9A84C' }}>
-                      {lider.nome.charAt(0).toUpperCase()}
+                    <div style={{ width:'44px', height:'44px', borderRadius:'50%', background: lider.foto_url ? 'transparent' : 'rgba(201,168,76,0.15)', border:'1px solid rgba(201,168,76,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'16px', fontWeight:700, color:'#C9A84C', overflow:'hidden', flexShrink:0 }}>
+                      {lider.foto_url
+                        ? <img src={lider.foto_url} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                        : lider.nome.charAt(0).toUpperCase()}
                     </div>
                     <div>
                       <div style={{ fontSize:'15px', fontWeight:600, color:'#E8EDF5' }}>{lider.nome}</div>

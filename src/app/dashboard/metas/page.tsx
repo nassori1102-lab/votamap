@@ -13,6 +13,7 @@ type LiderMeta = {
   zona_eleitoral: string
   meta_votos: number
   ativo: boolean
+  foto_url?: string
 }
 
 type ApoiadorEstimativa = {
@@ -35,6 +36,7 @@ type CidadeResumo = {
 type LiderGrupo = {
   id: string
   nome: string
+  foto_url?: string
   apoiadores: ApoiadorEstimativa[]
   totalEstimativa: number
   comEstimativa: number
@@ -62,7 +64,7 @@ export default function MetasPage() {
       if (!user) { router.push('/login'); return }
 
       const [{ data: lids }, { data: apois }] = await Promise.all([
-        supabase.from('lideres_regionais').select('id, nome, cidade, estado, zona_eleitoral, meta_votos, ativo').eq('ativo', true).order('cidade'),
+        supabase.from('lideres_regionais').select('id, nome, cidade, estado, zona_eleitoral, meta_votos, ativo, foto_url').eq('ativo', true).order('cidade'),
         supabase.from('apoiadores').select('id, nome, meta_votos, lider_id, cidade, zona_eleitoral').order('nome'),
       ])
 
@@ -89,7 +91,7 @@ export default function MetasPage() {
           const mapaLider = new Map<string, LiderGrupo>()
           // Inicializar com todos os líderes (mesmo sem apoiadores)
           for (const l of lids) {
-            mapaLider.set(l.id, { id: l.id, nome: l.nome, apoiadores: [], totalEstimativa: 0, comEstimativa: 0 })
+            mapaLider.set(l.id, { id: l.id, nome: l.nome, foto_url: l.foto_url || undefined, apoiadores: [], totalEstimativa: 0, comEstimativa: 0 })
           }
           // Apoiadores sem líder
           mapaLider.set('sem_lider', { id: 'sem_lider', nome: 'Sem líder definido', apoiadores: [], totalEstimativa: 0, comEstimativa: 0 })
@@ -327,8 +329,10 @@ export default function MetasPage() {
                       <button onClick={() => setGrupoAberto(aberto ? null : grupo.id)}
                         style={{ width: '100%', padding: '16px 20px', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: "'IBM Plex Sans', sans-serif", gap: '12px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
-                          <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: '#C9A84C', flexShrink: 0 }}>
-                            {grupo.nome.charAt(0).toUpperCase()}
+                          <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: grupo.foto_url ? 'transparent' : 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: '#C9A84C', flexShrink: 0, overflow: 'hidden' }}>
+                            {grupo.foto_url
+                              ? <img src={grupo.foto_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              : grupo.nome.charAt(0).toUpperCase()}
                           </div>
                           <div style={{ textAlign: 'left' as const, minWidth: 0 }}>
                             <div style={{ fontSize: '14px', fontWeight: 600, color: '#E8EDF5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{grupo.nome}</div>

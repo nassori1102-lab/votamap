@@ -24,6 +24,7 @@ type MetaComProgresso = MetaLider & {
   percentual: number
   liderNome: string
   liderCidade: string
+  liderFotoUrl?: string
 }
 
 function hoje(): string { return new Date().toISOString().split('T')[0] }
@@ -93,7 +94,7 @@ export default function AcompanhamentoPage() {
 
     const { data: metasData } = await supabase
       .from('metas_lider')
-      .select('*, lideres_regionais(nome, cidade, estado)')
+      .select('*, lideres_regionais(nome, cidade, estado, foto_url)')
       .gte('data_inicio', inicio)
       .lte('data_inicio', fim)
       .order('criado_em', { ascending: false })
@@ -117,7 +118,7 @@ export default function AcompanhamentoPage() {
         const { count } = await q
         const realizado = count || 0
         const percentual = m.meta_apoiadores > 0 ? Math.min(Math.round(realizado / m.meta_apoiadores * 100), 100) : 0
-        const lr = m.lideres_regionais as { nome: string; cidade: string; estado: string } | null
+        const lr = m.lideres_regionais as { nome: string; cidade: string; estado: string; foto_url?: string } | null
 
         return {
           ...m,
@@ -125,6 +126,7 @@ export default function AcompanhamentoPage() {
           percentual,
           liderNome: lr?.nome || '—',
           liderCidade: lr?.cidade || '',
+          liderFotoUrl: lr?.foto_url || undefined,
         }
       })
     )
@@ -296,8 +298,10 @@ export default function AcompanhamentoPage() {
                     )}
 
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', marginBottom: '16px' }}>
-                      <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 700, color: '#C9A84C', flexShrink: 0 }}>
-                        {m.liderNome.charAt(0).toUpperCase()}
+                      <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: m.liderFotoUrl ? 'transparent' : 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 700, color: '#C9A84C', flexShrink: 0, overflow: 'hidden' }}>
+                        {m.liderFotoUrl
+                          ? <img src={m.liderFotoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          : m.liderNome.charAt(0).toUpperCase()}
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: '15px', fontWeight: 600, color: '#E8EDF5', marginBottom: '2px' }}>{m.liderNome}</div>

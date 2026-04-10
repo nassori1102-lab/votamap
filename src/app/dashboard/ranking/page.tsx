@@ -17,6 +17,7 @@ type LiderRanking = {
   score: number            // Σ(engajamento × 10)
   posicao: number
   medalha: '🥇' | '🥈' | '🥉' | null
+  foto_url?: string
 }
 
 const MEDALHAS: Array<'🥇' | '🥈' | '🥉' | null> = ['🥇', '🥈', '🥉']
@@ -36,7 +37,7 @@ export default function RankingPage() {
       if (!user) { router.push('/login'); return }
 
       const [{ data: lideres }, { data: apoiadores }] = await Promise.all([
-        supabase.from('lideres_regionais').select('id, nome, cidade, estado, bairro, ativo'),
+        supabase.from('lideres_regionais').select('id, nome, cidade, estado, bairro, ativo, foto_url'),
         supabase.from('apoiadores').select('lider_id, engajamento'),
       ])
 
@@ -68,6 +69,7 @@ export default function RankingPage() {
           score: stats.scoreSum,
           posicao: 0,
           medalha: null,
+          foto_url: l.foto_url || undefined,
         }
       })
 
@@ -187,8 +189,10 @@ export default function RankingPage() {
                           display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'6px',
                           boxShadow: isCampeao ? `0 0 30px ${corMedalha}20` : 'none',
                         }}>
-                          <div style={{ width:'48px', height:'48px', borderRadius:'50%', background:`${corMedalha}20`, border:`2px solid ${corMedalha}60`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', fontWeight:700, color:corMedalha, flexShrink:0 }}>
-                            {lider.nome.charAt(0).toUpperCase()}
+                          <div style={{ width:'48px', height:'48px', borderRadius:'50%', background: lider.foto_url ? 'transparent' : `${corMedalha}20`, border:`2px solid ${corMedalha}60`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', fontWeight:700, color:corMedalha, flexShrink:0, overflow:'hidden' }}>
+                            {lider.foto_url
+                              ? <img src={lider.foto_url} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                              : lider.nome.charAt(0).toUpperCase()}
                           </div>
                           <div style={{ fontFamily:"'Playfair Display', serif", fontSize: isCampeao ? '16px' : '14px', fontWeight:700, color:'#FFFFFF', textAlign:'center' as const, lineHeight:1.2 }}>{lider.nome}</div>
                           <div style={{ fontSize:'11px', color:'#8FA4C0', textAlign:'center' as const }}>{lider.cidade}{lider.estado ? `/${lider.estado}` : ''}</div>
@@ -239,8 +243,10 @@ export default function RankingPage() {
 
                     {/* Nome + localização */}
                     <div style={{ display:'flex', alignItems:'center', gap:'10px', flex: isMobile ? 1 : undefined, minWidth:0 }}>
-                      <div style={{ width:'34px', height:'34px', borderRadius:'50%', background:`${isMedalha ? corPos : '#1C3558'}30`, border:`1px solid ${isMedalha ? corPos : '#1C3558'}60`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'13px', fontWeight:700, color: isMedalha ? corPos : '#8FA4C0', flexShrink:0 }}>
-                        {lider.nome.charAt(0).toUpperCase()}
+                      <div style={{ width:'34px', height:'34px', borderRadius:'50%', background: lider.foto_url ? 'transparent' : `${isMedalha ? corPos : '#1C3558'}30`, border:`1px solid ${isMedalha ? corPos : '#1C3558'}60`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'13px', fontWeight:700, color: isMedalha ? corPos : '#8FA4C0', flexShrink:0, overflow:'hidden' }}>
+                        {lider.foto_url
+                          ? <img src={lider.foto_url} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                          : lider.nome.charAt(0).toUpperCase()}
                       </div>
                       <div style={{ minWidth:0 }}>
                         <div style={{ fontSize:'13px', fontWeight:600, color:'#E8EDF5', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{lider.nome}</div>

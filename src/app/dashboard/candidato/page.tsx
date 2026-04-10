@@ -14,6 +14,8 @@ type Candidato = {
   email: string
   telefone: string
   bio: string
+  foto_url?: string
+  logo_partido_url?: string
 }
 
 export default function CandidatoPage() {
@@ -23,10 +25,13 @@ export default function CandidatoPage() {
   const [erro, setErro] = useState('')
   const [sucesso, setSucesso] = useState(false)
   const [candidatoExistente, setCandidatoExistente] = useState<Candidato | null>(null)
+  const [uploadandoFoto, setUploadandoFoto] = useState(false)
+  const [uploadandoLogo, setUploadandoLogo] = useState(false)
 
   const [form, setForm] = useState({
     nome: '', partido: '', cargo: 'Deputado Federal',
     estado: '', numero_urna: '', email: '', telefone: '', bio: '',
+    foto_url: '', logo_partido_url: '',
   })
 
   function mascaraTelefone(v: string) {
@@ -51,6 +56,8 @@ export default function CandidatoPage() {
           email: data.email || '',
           telefone: data.telefone || '',
           bio: data.bio || '',
+          foto_url: data.foto_url || '',
+          logo_partido_url: data.logo_partido_url || '',
         })
       }
     }
@@ -62,6 +69,36 @@ export default function CandidatoPage() {
     setForm(prev => ({ ...prev, [campo]: valor }))
   }
 
+  async function handleUploadImagem(e: React.ChangeEvent<HTMLInputElement>, campo: 'foto_url' | 'logo_partido_url') {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) { setErro('Arquivo muito grande. Use até 5 MB.'); return }
+    if (!candidatoExistente) { setErro('Salve o candidato antes de fazer upload.'); return }
+
+    if (campo === 'foto_url') setUploadandoFoto(true)
+    else setUploadandoLogo(true)
+    setErro('')
+
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('candidato_id', candidatoExistente.id)
+    fd.append('campo', campo)
+
+    const res = await fetch('/api/upload/foto-candidato', { method: 'POST', body: fd })
+    const result = await res.json()
+
+    if (!res.ok) {
+      setErro('Erro no upload: ' + (result.error || res.statusText))
+    } else {
+      setForm(prev => ({ ...prev, [campo]: result.url }))
+      setCandidatoExistente(prev => prev ? { ...prev, [campo]: result.url } : prev)
+    }
+
+    if (campo === 'foto_url') setUploadandoFoto(false)
+    else setUploadandoLogo(false)
+    e.target.value = ''
+  }
+
   async function handleSalvar(e: React.FormEvent) {
     e.preventDefault()
     setSalvando(true)
@@ -71,13 +108,23 @@ export default function CandidatoPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
 
+    const payload = {
+      nome: form.nome, partido: form.partido, cargo: form.cargo,
+      estado: form.estado, numero_urna: form.numero_urna, email: form.email,
+      telefone: form.telefone, bio: form.bio,
+    }
+
     let error
     if (candidatoExistente) {
-      const res = await supabase.from('candidatos').update(form).eq('id', candidatoExistente.id)
+      const res = await supabase.from('candidatos').update(payload).eq('id', candidatoExistente.id)
       error = res.error
     } else {
-      const res = await supabase.from('candidatos').insert({ ...form, ativo: true })
+      const res = await supabase.from('candidatos').insert({ ...payload, ativo: true })
       error = res.error
+      if (!error) {
+        const { data } = await supabase.from('candidatos').select('*').limit(1).single()
+        if (data) setCandidatoExistente(data)
+      }
     }
 
     if (error) {
@@ -112,6 +159,7 @@ export default function CandidatoPage() {
         onBlur={e => e.target.style.borderColor='#1C3558'} />
     </div>
   )
+
   return (
     <div style={{ minHeight:'100vh', background:'#0B1F3A', fontFamily:"'IBM Plex Sans', sans-serif" }}>
       <div style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:0, backgroundImage:`repeating-linear-gradient(0deg, transparent, transparent 80px, rgba(201,168,76,0.02) 80px, rgba(201,168,76,0.02) 81px), repeating-linear-gradient(90deg, transparent, transparent 80px, rgba(201,168,76,0.02) 80px, rgba(201,168,76,0.02) 81px)` }} />
@@ -139,6 +187,47 @@ export default function CandidatoPage() {
         </div>
 
         <form onSubmit={handleSalvar} style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
+
+          {/* FOTO E LOGO */}
+          <div style={{ background:'#0F2040', border:'1px solid #1C3558', borderRadius:'12px', padding:'28px' }}>
+            <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:'17px', fontWeight:700, color:'#C9A84C', marginBottom:'20px', paddingBottom:'12px', borderBottom:'1px solid #1C3558' }}>
+              Imagens da Campanha
+            </h2>
+            {!candidatoExistente && (
+              <div style={{ background:'rgba(107,163,214,0.07)', border:'1px solid rgba(107,163,214,0.15)', borderRadius:'8px', padding:'10px 14px', fontSize:'12px', color:'#8FA4C0', marginBottom:'20px' }}>
+                💡 Salve o candidato primeiro para habilitar o upload de imagens.
+              </div>
+            )}
+            <div style={{ display:'flex', gap:'32px', flexWrap:'wrap' }}>
+              {/* Foto do candidato */}
+              <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'10px' }}>
+                <div style={{ width:'96px', height:'96px', borderRadius:'50%', background: form.foto_url ? 'transparent' : 'rgba(201,168,76,0.12)', border:'2px solid rgba(201,168,76,0.3)', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', flexShrink:0 }}>
+                  {form.foto_url
+                    ? <img src={form.foto_url} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                    : <span style={{ fontSize:'32px', fontWeight:700, color:'#C9A84C' }}>{form.nome ? form.nome.charAt(0).toUpperCase() : '👤'}</span>}
+                </div>
+                <label style={{ cursor: candidatoExistente ? 'pointer' : 'not-allowed', background:'rgba(201,168,76,0.1)', border:'1px solid rgba(201,168,76,0.2)', borderRadius:'6px', padding:'6px 14px', fontSize:'12px', color: candidatoExistente ? '#C9A84C' : '#3D5470', fontFamily:"'IBM Plex Sans', sans-serif", textAlign:'center' }}>
+                  {uploadandoFoto ? '⏳ Enviando...' : '📷 Foto'}
+                  <input type="file" accept="image/*" style={{ display:'none' }} disabled={!candidatoExistente || uploadandoFoto} onChange={e => handleUploadImagem(e, 'foto_url')} />
+                </label>
+                <span style={{ fontSize:'10px', color:'#8FA4C0', textAlign:'center' }}>Foto do candidato<br/>até 5 MB</span>
+              </div>
+
+              {/* Logo do partido */}
+              <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'10px' }}>
+                <div style={{ width:'96px', height:'96px', borderRadius:'12px', background: form.logo_partido_url ? 'transparent' : 'rgba(107,163,214,0.08)', border:'2px solid rgba(107,163,214,0.2)', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', flexShrink:0 }}>
+                  {form.logo_partido_url
+                    ? <img src={form.logo_partido_url} style={{ width:'100%', height:'100%', objectFit:'contain', padding:'4px' }} />
+                    : <span style={{ fontSize:'28px' }}>🏛</span>}
+                </div>
+                <label style={{ cursor: candidatoExistente ? 'pointer' : 'not-allowed', background:'rgba(107,163,214,0.1)', border:'1px solid rgba(107,163,214,0.2)', borderRadius:'6px', padding:'6px 14px', fontSize:'12px', color: candidatoExistente ? '#6ba3d6' : '#3D5470', fontFamily:"'IBM Plex Sans', sans-serif", textAlign:'center' }}>
+                  {uploadandoLogo ? '⏳ Enviando...' : '🏛 Logomarca'}
+                  <input type="file" accept="image/*" style={{ display:'none' }} disabled={!candidatoExistente || uploadandoLogo} onChange={e => handleUploadImagem(e, 'logo_partido_url')} />
+                </label>
+                <span style={{ fontSize:'10px', color:'#8FA4C0', textAlign:'center' }}>Logo do partido<br/>até 5 MB</span>
+              </div>
+            </div>
+          </div>
 
           {/* DADOS DA CANDIDATURA */}
           <div style={{ background:'#0F2040', border:'1px solid #1C3558', borderRadius:'12px', padding:'28px' }}>
