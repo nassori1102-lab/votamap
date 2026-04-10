@@ -79,7 +79,7 @@ export default function LoginPage() {
             fontSize: '26px', fontWeight: 800,
             color: '#FFFFFF', letterSpacing: '0.5px',
           }}>
-            Vota<span style={{ color: '#C9A84C' }}>Map</span>
+            Cand<span style={{ color: '#C9A84C' }}>Maps</span>
           </div>
           <div style={{ fontSize: '13px', color: '#8FA4C0', marginTop: '6px' }}>
             Plataforma de Gestão de Campanha
@@ -195,7 +195,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
     </div>
   )
 }

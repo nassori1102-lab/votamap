@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { useIsMobile } from '@/lib/useIsMobile'
 
 type Lider = {
   id: string
@@ -21,6 +22,7 @@ export default function LideresPage() {
   const [lideres, setLideres] = useState<Lider[]>([])
   const [loading, setLoading] = useState(true)
   const [busca, setBusca] = useState('')
+  const isMobile = useIsMobile()
   const router = useRouter()
   const supabase = createClient()
 
@@ -51,12 +53,11 @@ export default function LideresPage() {
   const estilos = {
     page: { minHeight:'100vh', background:'#0B1F3A', fontFamily:"'IBM Plex Sans', sans-serif" } as React.CSSProperties,
     grade: { position:'fixed' as const, inset:0, pointerEvents:'none' as const, zIndex:0, backgroundImage:`repeating-linear-gradient(0deg, transparent, transparent 80px, rgba(201,168,76,0.02) 80px, rgba(201,168,76,0.02) 81px), repeating-linear-gradient(90deg, transparent, transparent 80px, rgba(201,168,76,0.02) 80px, rgba(201,168,76,0.02) 81px)` },
-    nav: { position:'fixed' as const, top:0, left:0, right:0, zIndex:100, height:'64px', background:'rgba(11,31,58,0.95)', backdropFilter:'blur(20px)', borderBottom:'1px solid rgba(201,168,76,0.15)', display:'flex', alignItems:'center', padding:'0 32px', justifyContent:'space-between' },
-    main: { paddingTop:'88px', padding:'88px 32px 40px', position:'relative' as const, zIndex:1 },
+    nav: { position:'fixed' as const, top:0, left:0, right:0, zIndex:100, height:'64px', background:'rgba(11,31,58,0.95)', backdropFilter:'blur(20px)', borderBottom:'1px solid rgba(201,168,76,0.15)', display:'flex', alignItems:'center', padding: isMobile ? '0 16px' : '0 32px', justifyContent:'space-between' },
+    main: { paddingTop:'88px', padding: isMobile ? '80px 16px 40px' : '88px 32px 40px', position:'relative' as const, zIndex:1 },
   }
   return (
     <div style={estilos.page}>
-      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
       <div style={estilos.grade} />
 
       {/* NAV */}
@@ -67,13 +68,19 @@ export default function LideresPage() {
           </button>
           <div style={{ width:'1px', height:'20px', background:'#1C3558' }} />
           <span style={{ fontFamily:"'Playfair Display', serif", fontSize:'20px', fontWeight:800, color:'#FFFFFF' }}>
-            Vota<span style={{ color:'#C9A84C' }}>Map</span>
+            Cand<span style={{ color:'#C9A84C' }}>Maps</span>
           </span>
         </div>
-        <button onClick={() => router.push('/dashboard/lideres/novo')}
-          style={{ background:'linear-gradient(135deg, #E8C87A, #A07830)', border:'none', borderRadius:'8px', color:'#0B1F3A', fontSize:'14px', fontWeight:600, padding:'10px 22px', cursor:'pointer', fontFamily:"'IBM Plex Sans', sans-serif" }}>
-          + Novo Líder
-        </button>
+        <div style={{ display:'flex', gap:'10px' }}>
+          {!isMobile && <button onClick={() => router.push('/dashboard/ranking')}
+            style={{ background:'transparent', border:'1px solid rgba(201,168,76,0.3)', borderRadius:'8px', color:'#C9A84C', fontSize:'14px', padding:'10px 18px', cursor:'pointer', fontFamily:"'IBM Plex Sans', sans-serif" }}>
+            🏆 Ranking
+          </button>}
+          <button onClick={() => router.push('/dashboard/lideres/novo')}
+            style={{ background:'linear-gradient(135deg, #E8C87A, #A07830)', border:'none', borderRadius:'8px', color:'#0B1F3A', fontSize: isMobile ? '13px' : '14px', fontWeight:600, padding: isMobile ? '9px 14px' : '10px 22px', cursor:'pointer', fontFamily:"'IBM Plex Sans', sans-serif" }}>
+            + {isMobile ? 'Novo' : 'Novo Líder'}
+          </button>
+        </div>
       </nav>
 
       <main style={estilos.main}>
@@ -83,7 +90,7 @@ export default function LideresPage() {
             <span style={{ width:'24px', height:'1px', background:'#A07830', display:'inline-block' }} />
             Gestão de Lideranças
           </div>
-          <h1 style={{ fontFamily:"'Playfair Display', serif", fontSize:'32px', fontWeight:800, color:'#FFFFFF', marginBottom:'6px' }}>
+          <h1 style={{ fontFamily:"'Playfair Display', serif", fontSize: isMobile ? '24px' : '32px', fontWeight:800, color:'#FFFFFF', marginBottom:'6px' }}>
             Líderes Regionais
           </h1>
           <p style={{ fontSize:'14px', color:'#8FA4C0', fontWeight:300 }}>

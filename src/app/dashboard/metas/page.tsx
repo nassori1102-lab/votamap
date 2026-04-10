@@ -1,0 +1,242 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
+import { useIsMobile } from '@/lib/useIsMobile'
+
+type ApoiadorMeta = {
+  id: string
+  nome: string
+  zona_eleitoral: string
+  meta_votos: number
+  engajamento: number
+  lideres_regionais?: { nome: string } | { nome: string }[]
+}
+
+type ZonaResumo = {
+  zona: string
+  apoiadores: number
+  comMeta: number
+  metaTotal: number
+}
+
+const labelStyle = { fontSize:'11px', fontWeight:600 as const, letterSpacing:'1px', textTransform:'uppercase' as const, color:'#8FA4C0' }
+
+export default function MetasPage() {
+  const router = useRouter()
+  const supabase = createClient()
+  const isMobile = useIsMobile()
+  const [apoiadores, setApoiadores] = useState<ApoiadorMeta[]>([])
+  const [loading, setLoading] = useState(true)
+  const [zonas, setZonas] = useState<ZonaResumo[]>([])
+  const [semZona, setSemZona] = useState<ApoiadorMeta[]>([])
+  const [verSemZona, setVerSemZona] = useState(false)
+
+  useEffect(() => {
+    async function carregar() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/login'); return }
+
+      const { data } = await supabase
+        .from('apoiadores')
+        .select('id, nome, zona_eleitoral, meta_votos, engajamento, lideres_regionais(nome)')
+        .order('zona_eleitoral', { ascending: true })
+
+      if (data) {
+        setApoiadores(data)
+
+        // Agrupar por zona
+        const mapa = new Map<string, ZonaResumo>()
+        const semZonaLista: ApoiadorMeta[] = []
+
+        for (const a of data) {
+          if (!a.zona_eleitoral) { semZonaLista.push(a); continue }
+          const zona = a.zona_eleitoral.trim()
+          const atual = mapa.get(zona) || { zona, apoiadores: 0, comMeta: 0, metaTotal: 0 }
+          atual.apoiadores++
+          if (a.meta_votos > 0) { atual.comMeta++; atual.metaTotal += a.meta_votos }
+          mapa.set(zona, atual)
+        }
+
+        const zonasOrdenadas = Array.from(mapa.values()).sort((a, b) => a.zona.localeCompare(b.zona))
+        setZonas(zonasOrdenadas)
+        setSemZona(semZonaLista)
+      }
+      setLoading(false)
+    }
+    carregar()
+  }, [])
+
+  const metaTotal = zonas.reduce((acc, z) => acc + z.metaTotal, 0)
+  const totalApoiadores = apoiadores.length
+  const totalComMeta = apoiadores.filter(a => a.meta_votos > 0).length
+  const totalZonas = zonas.length
+
+  if (loading) return (
+    <div style={{ minHeight:'100vh', background:'#0B1F3A', display:'flex', alignItems:'center', justifyContent:'center', color:'#C9A84C', fontFamily:"'IBM Plex Sans', sans-serif" }}>
+      Carregando...
+    </div>
+  )
+
+  return (
+    <div style={{ minHeight:'100vh', background:'#0B1F3A', fontFamily:"'IBM Plex Sans', sans-serif" }}>
+      <div style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:0, backgroundImage:`repeating-linear-gradient(0deg, transparent, transparent 80px, rgba(201,168,76,0.02) 80px, rgba(201,168,76,0.02) 81px), repeating-linear-gradient(90deg, transparent, transparent 80px, rgba(201,168,76,0.02) 80px, rgba(201,168,76,0.02) 81px)` }} />
+
+      {/* NAV */}
+      <nav style={{ position:'fixed', top:0, left:0, right:0, zIndex:100, height:'64px', background:'rgba(11,31,58,0.95)', backdropFilter:'blur(20px)', borderBottom:'1px solid rgba(201,168,76,0.15)', display:'flex', alignItems:'center', padding: isMobile ? '0 16px' : '0 32px', justifyContent:'space-between', gap:'8px' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
+          <button onClick={() => router.push('/dashboard')} style={{ background:'transparent', border:'none', color:'#8FA4C0', cursor:'pointer', fontSize:'13px' }}>← Voltar</button>
+          {!isMobile && <>
+            <div style={{ width:'1px', height:'20px', background:'#1C3558' }} />
+            <span style={{ fontFamily:"'Playfair Display', serif", fontSize:'20px', fontWeight:800, color:'#FFFFFF' }}>Cand<span style={{ color:'#C9A84C' }}>Maps</span></span>
+          </>}
+        </div>
+        <button onClick={() => router.push('/dashboard/apoiadores')} style={{ background:'rgba(201,168,76,0.1)', border:'1px solid rgba(201,168,76,0.2)', borderRadius:'8px', color:'#C9A84C', fontSize:'13px', padding:'8px 12px', cursor:'pointer', fontFamily:"'IBM Plex Sans', sans-serif", whiteSpace:'nowrap' as const }}>
+          ✏️ {isMobile ? 'Definir metas' : 'Definir metas nos apoiadores'}
+        </button>
+      </nav>
+
+      <main style={{ paddingTop:'88px', padding: isMobile ? '80px 16px 40px' : '88px 32px 60px', position:'relative', zIndex:1, maxWidth:'1100px', margin:'0 auto' }}>
+
+        {/* TÍTULO */}
+        <div style={{ marginBottom:'32px' }}>
+          <div style={{ fontSize:'11px', fontWeight:600, letterSpacing:'2.5px', textTransform:'uppercase' as const, color:'#C9A84C', display:'flex', alignItems:'center', gap:'10px', marginBottom:'10px' }}>
+            <span style={{ width:'24px', height:'1px', background:'#A07830', display:'inline-block' }} />
+            Planejamento Eleitoral
+          </div>
+          <h1 style={{ fontFamily:"'Playfair Display', serif", fontSize: isMobile ? '24px' : '32px', fontWeight:800, color:'#FFFFFF', marginBottom:'6px' }}>Metas de Votos</h1>
+          <p style={{ fontSize:'14px', color:'#8FA4C0' }}>Projeção de votos por apoiador, consolidada por zona eleitoral</p>
+        </div>
+
+        {/* CARDS RESUMO */}
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap:'12px', marginBottom:'28px' }}>
+          {[
+            { label:'Meta Total', valor: metaTotal > 0 ? metaTotal.toLocaleString('pt-BR') : '—', sub:'votos projetados', cor:'#86efac', icone:'🎯' },
+            { label:'Apoiadores', valor: totalApoiadores.toLocaleString('pt-BR'), sub:`${totalComMeta} com meta definida`, cor:'#6ba3d6', icone:'🗳' },
+            { label:'Zonas Cobertas', valor: totalZonas.toString(), sub:'zonas eleitorais', cor:'#C9A84C', icone:'📍' },
+            { label:'Cobertura', valor: totalApoiadores > 0 ? `${Math.round(totalComMeta / totalApoiadores * 100)}%` : '0%', sub:'apoiadores com meta', cor:'#a78bfa', icone:'📊' },
+          ].map(c => (
+            <div key={c.label} style={{ background:'#0F2040', border:'1px solid #1C3558', borderRadius:'12px', padding:'20px' }}>
+              <div style={{ fontSize:'22px', marginBottom:'10px' }}>{c.icone}</div>
+              <div style={labelStyle}>{c.label}</div>
+              <div style={{ fontFamily:"'Playfair Display', serif", fontSize:'28px', fontWeight:800, color:c.cor, margin:'4px 0' }}>{c.valor}</div>
+              <div style={{ fontSize:'12px', color:'#8FA4C0' }}>{c.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* TABELA POR ZONA */}
+        {zonas.length === 0 ? (
+          <div style={{ background:'#0F2040', border:'1px solid #1C3558', borderRadius:'12px', padding:'48px', textAlign:'center' as const }}>
+            <div style={{ fontSize:'48px', marginBottom:'16px' }}>🎯</div>
+            <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:'20px', fontWeight:700, color:'#FFFFFF', marginBottom:'8px' }}>Nenhuma meta definida ainda</h2>
+            <p style={{ fontSize:'14px', color:'#8FA4C0', marginBottom:'24px' }}>
+              Abra o cadastro de cada apoiador e defina quantos votos ele deve trazer na sua zona eleitoral.
+            </p>
+            <button onClick={() => router.push('/dashboard/apoiadores')} style={{ background:'linear-gradient(135deg, #E8C87A, #A07830)', border:'none', borderRadius:'8px', color:'#0B1F3A', fontSize:'14px', fontWeight:600, padding:'12px 28px', cursor:'pointer', fontFamily:"'IBM Plex Sans', sans-serif" }}>
+              Ir para Apoiadores →
+            </button>
+          </div>
+        ) : (
+          <div style={{ background:'#0F2040', border:'1px solid #1C3558', borderRadius:'12px', overflow: isMobile ? 'auto' : 'hidden' }}>
+            <div style={{ padding:'20px 24px', borderBottom:'1px solid #1C3558', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:'18px', fontWeight:700, color:'#FFFFFF' }}>Panorama por Zona Eleitoral</h2>
+              <span style={{ fontSize:'12px', color:'#8FA4C0' }}>{zonas.length} zona{zonas.length !== 1 ? 's' : ''}</span>
+            </div>
+
+            {/* HEADER */}
+            <div style={{ display:'grid', gridTemplateColumns:'100px 1fr 100px 120px 120px 200px', gap:'0', padding:'10px 24px', borderBottom:'1px solid #1C3558', background:'rgba(0,0,0,0.2)' }}>
+              {['Zona', 'Apoiadores', 'Com Meta', 'Meta Total', 'Média/Apoiador', '% da Meta Geral'].map(h => (
+                <div key={h} style={{ ...labelStyle, fontSize:'10px' }}>{h}</div>
+              ))}
+            </div>
+
+            {/* LINHAS */}
+            {zonas.map((z, i) => {
+              const pct = metaTotal > 0 ? (z.metaTotal / metaTotal * 100) : 0
+              const media = z.comMeta > 0 ? Math.round(z.metaTotal / z.comMeta) : 0
+              const cobertura = z.apoiadores > 0 ? Math.round(z.comMeta / z.apoiadores * 100) : 0
+              return (
+                <div key={z.zona} style={{ display:'grid', gridTemplateColumns:'100px 1fr 100px 120px 120px 200px', gap:'0', padding:'14px 24px', borderBottom: i < zonas.length - 1 ? '1px solid rgba(28,53,88,0.5)' : 'none', alignItems:'center', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                  <div style={{ fontFamily:"'Playfair Display', serif", fontSize:'16px', fontWeight:700, color:'#C9A84C' }}>
+                    {z.zona.padStart(3, '0')}
+                  </div>
+                  <div>
+                    <div style={{ fontSize:'14px', color:'#E8EDF5', fontWeight:500 }}>{z.apoiadores} apoiador{z.apoiadores !== 1 ? 'es' : ''}</div>
+                    {cobertura < 100 && <div style={{ fontSize:'11px', color:'#8FA4C0' }}>{cobertura}% com meta</div>}
+                  </div>
+                  <div style={{ fontSize:'14px', color: z.comMeta === z.apoiadores ? '#86efac' : '#8FA4C0', fontWeight:500 }}>
+                    {z.comMeta}/{z.apoiadores}
+                  </div>
+                  <div style={{ fontFamily:"'Playfair Display', serif", fontSize:'18px', fontWeight:700, color: z.metaTotal > 0 ? '#86efac' : '#3D5470' }}>
+                    {z.metaTotal > 0 ? z.metaTotal.toLocaleString('pt-BR') : '—'}
+                  </div>
+                  <div style={{ fontSize:'14px', color:'#8FA4C0' }}>
+                    {media > 0 ? `${media.toLocaleString('pt-BR')} votos` : '—'}
+                  </div>
+                  <div>
+                    {z.metaTotal > 0 ? (
+                      <>
+                        <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'2px' }}>
+                          <div style={{ flex:1, height:'6px', background:'rgba(255,255,255,0.05)', borderRadius:'3px', overflow:'hidden' }}>
+                            <div style={{ height:'100%', width:`${Math.min(pct, 100)}%`, background:'linear-gradient(90deg, #C9A84C, #86efac)', borderRadius:'3px', transition:'width .3s' }} />
+                          </div>
+                          <span style={{ fontSize:'12px', color:'#8FA4C0', minWidth:'36px', textAlign:'right' as const }}>{pct.toFixed(1)}%</span>
+                        </div>
+                      </>
+                    ) : (
+                      <span style={{ fontSize:'12px', color:'#3D5470' }}>sem meta</span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+
+            {/* TOTAIS */}
+            <div style={{ display:'grid', gridTemplateColumns:'100px 1fr 100px 120px 120px 200px', gap:'0', padding:'16px 24px', borderTop:'2px solid rgba(201,168,76,0.2)', background:'rgba(201,168,76,0.03)' }}>
+              <div style={{ ...labelStyle, fontSize:'10px' }}>Total</div>
+              <div style={{ fontSize:'14px', color:'#E8EDF5', fontWeight:600 }}>{totalApoiadores} apoiadores</div>
+              <div style={{ fontSize:'14px', color:'#E8EDF5', fontWeight:600 }}>{totalComMeta}/{totalApoiadores}</div>
+              <div style={{ fontFamily:"'Playfair Display', serif", fontSize:'20px', fontWeight:800, color:'#C9A84C' }}>
+                {metaTotal > 0 ? metaTotal.toLocaleString('pt-BR') : '—'}
+              </div>
+              <div style={{ fontSize:'14px', color:'#8FA4C0' }}>
+                {totalComMeta > 0 ? `${Math.round(metaTotal / totalComMeta).toLocaleString('pt-BR')} votos` : '—'}
+              </div>
+              <div />
+            </div>
+          </div>
+        )}
+
+        {/* APOIADORES SEM ZONA */}
+        {semZona.length > 0 && (
+          <div style={{ marginTop:'16px', background:'rgba(192,57,43,0.05)', border:'1px solid rgba(192,57,43,0.2)', borderRadius:'12px', overflow:'hidden' }}>
+            <button onClick={() => setVerSemZona(v => !v)} style={{ width:'100%', padding:'16px 24px', background:'transparent', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'space-between', fontFamily:"'IBM Plex Sans', sans-serif" }}>
+              <span style={{ fontSize:'14px', color:'#e74c3c', fontWeight:500 }}>
+                ⚠️ {semZona.length} apoiador{semZona.length !== 1 ? 'es' : ''} sem zona eleitoral definida
+              </span>
+              <span style={{ fontSize:'12px', color:'#8FA4C0' }}>{verSemZona ? '▲ ocultar' : '▼ ver lista'}</span>
+            </button>
+            {verSemZona && (
+              <div style={{ borderTop:'1px solid rgba(192,57,43,0.2)', padding:'8px 24px 16px' }}>
+                {semZona.map(a => (
+                  <div key={a.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.03)' }}>
+                    <div>
+                      <span style={{ fontSize:'14px', color:'#E8EDF5' }}>{a.nome}</span>
+                      {!Array.isArray(a.lideres_regionais) && a.lideres_regionais?.nome && <span style={{ fontSize:'12px', color:'#8FA4C0', marginLeft:'8px' }}>· {a.lideres_regionais.nome}</span>}
+                    </div>
+                    <button onClick={() => router.push(`/dashboard/apoiadores/${a.id}`)} style={{ background:'transparent', border:'1px solid rgba(192,57,43,0.3)', borderRadius:'6px', color:'#e74c3c', fontSize:'12px', padding:'4px 12px', cursor:'pointer', fontFamily:"'IBM Plex Sans', sans-serif" }}>
+                      Corrigir →
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+      </main>
+    </div>
+  )
+}

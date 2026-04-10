@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       for (const dest of lote) {
         try {
           const { data, error } = await resend.emails.send({
-            from: `${remetente_nome || 'VotaMap Campanha'} <onboarding@resend.dev>`,
+            from: `${remetente_nome || 'CandMaps Campanha'} <onboarding@resend.dev>`,
             to: dest.email,
             subject: assunto,
             html: `
