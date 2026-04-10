@@ -13,6 +13,7 @@ type Lider = {
   ativo: boolean
   telefone: string
   zona_eleitoral: string
+  foto_url?: string
 }
 
 type Apoiador = {
@@ -145,28 +146,41 @@ export default function MapaComponent({ lideres, apoiadores, onLiderClick }: Pro
         if (!lider.latitude || !lider.longitude) continue
         const cor = lider.ativo ? '#C9A84C' : '#ef4444'
         const totalApoiadores = apoiadoresPorLider.get(lider.id) || 0
+        const avatarInner = lider.foto_url
+          ? `<img src="${lider.foto_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
+          : `<span style="color:#0B1F3A;font-weight:700;font-size:14px;">${lider.nome.charAt(0)}</span>`
         const icone = L.divIcon({
           html: `
-            <div style="position:relative;width:38px;height:38px;">
-              <div style="width:38px;height:38px;background:${cor};border:3px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;">
-                <div style="transform:rotate(45deg);color:#0B1F3A;font-weight:700;font-size:13px;">${lider.nome.charAt(0)}</div>
+            <div style="position:relative;width:44px;height:52px;">
+              <div style="width:44px;height:44px;background:${lider.foto_url ? 'transparent' : cor};border:3px solid ${cor};border-radius:50%;box-shadow:0 3px 10px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                ${avatarInner}
               </div>
-              ${totalApoiadores > 0 ? `<div style="position:absolute;top:-6px;right:-6px;background:#6ba3d6;color:white;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;min-width:18px;text-align:center;border:1.5px solid white;">${totalApoiadores}</div>` : ''}
+              <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid ${cor};"></div>
+              ${totalApoiadores > 0 ? `<div style="position:absolute;top:-4px;right:-4px;background:#6ba3d6;color:white;border-radius:10px;font-size:9px;font-weight:700;padding:1px 5px;min-width:17px;text-align:center;border:1.5px solid white;">${totalApoiadores}</div>` : ''}
             </div>
           `,
           className: '',
-          iconSize: [38, 38],
-          iconAnchor: [19, 38],
-          popupAnchor: [0, -42],
+          iconSize: [44, 52],
+          iconAnchor: [22, 52],
+          popupAnchor: [0, -56],
         })
         const marker = L.marker([lider.latitude, lider.longitude], { icon: icone })
         marker.bindPopup(`
-          <div style="font-family:'IBM Plex Sans',sans-serif;background:#0F2040;border:1px solid #1C3558;border-radius:10px;padding:16px;min-width:200px;color:#E8EDF5;">
-            <div style="font-weight:700;font-size:15px;margin-bottom:4px;color:${cor};">${lider.nome}</div>
-            <div style="font-size:12px;color:#8FA4C0;margin-bottom:10px;">${lider.bairro} · ${lider.cidade}/${lider.estado}</div>
-            ${lider.zona_eleitoral ? `<div style="font-size:12px;color:#8FA4C0;">🗳 Zona ${lider.zona_eleitoral}</div>` : ''}
-            ${lider.telefone ? `<div style="font-size:12px;color:#8FA4C0;">📞 ${lider.telefone}</div>` : ''}
-            <div style="font-size:12px;color:#6ba3d6;margin-top:8px;font-weight:600;">🗳 ${totalApoiadores} apoiador${totalApoiadores !== 1 ? 'es' : ''}</div>
+          <div style="font-family:'IBM Plex Sans',sans-serif;background:#0F2040;border:1px solid #1C3558;border-radius:10px;padding:16px;min-width:220px;color:#E8EDF5;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;border:2px solid ${cor};flex-shrink:0;background:rgba(201,168,76,0.15);display:flex;align-items:center;justify-content:center;">
+                ${lider.foto_url
+                  ? `<img src="${lider.foto_url}" style="width:100%;height:100%;object-fit:cover;">`
+                  : `<span style="font-weight:700;font-size:16px;color:${cor};">${lider.nome.charAt(0)}</span>`}
+              </div>
+              <div>
+                <div style="font-weight:700;font-size:14px;color:${cor};">${lider.nome}</div>
+                <div style="font-size:11px;color:#8FA4C0;">${lider.bairro ? lider.bairro + ' · ' : ''}${lider.cidade}/${lider.estado}</div>
+              </div>
+            </div>
+            ${lider.zona_eleitoral ? `<div style="font-size:12px;color:#8FA4C0;margin-bottom:4px;">🗳 Zona ${lider.zona_eleitoral}</div>` : ''}
+            ${lider.telefone ? `<div style="font-size:12px;color:#8FA4C0;margin-bottom:4px;">📞 ${lider.telefone}</div>` : ''}
+            <div style="font-size:12px;color:#6ba3d6;font-weight:600;">👥 ${totalApoiadores} apoiador${totalApoiadores !== 1 ? 'es' : ''}</div>
             <div style="font-size:12px;color:${lider.ativo ? '#C9A84C' : '#ef4444'};margin-top:4px;font-weight:600;">${lider.ativo ? '● Ativo' : '● Inativo'}</div>
           </div>
         `, { className: 'candmaps-popup', maxWidth: 280 })

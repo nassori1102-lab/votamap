@@ -26,6 +26,7 @@ type Lider = {
   ativo: boolean
   telefone: string
   zona_eleitoral: string
+  foto_url?: string
 }
 
 type Apoiador = {
@@ -61,7 +62,7 @@ export default function MapaPage() {
   async function carregarDados() {
     const [{ data: lideresData }, { data: apoiadoresData }] = await Promise.all([
       supabase.from('lideres_regionais')
-        .select('id, nome, bairro, cidade, estado, latitude, longitude, ativo, telefone, zona_eleitoral')
+        .select('id, nome, bairro, cidade, estado, latitude, longitude, ativo, telefone, zona_eleitoral, foto_url')
         .order('nome'),
       supabase.from('apoiadores')
         .select('id, nome, lider_id, engajamento, bairro, cidade'),
@@ -229,8 +230,11 @@ export default function MapaPage() {
                     onMouseLeave={e => { if (liderSelecionado?.id !== lider.id) (e.currentTarget as HTMLDivElement).style.background='transparent' }}
                   >
                     <div style={{ display:'flex', alignItems:'center', gap:'9px' }}>
-                      <div style={{ width:'30px', height:'30px', borderRadius:'50%', background: lider.ativo ? 'rgba(201,168,76,0.15)' : 'rgba(239,68,68,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:700, color: lider.ativo ? '#C9A84C' : '#ef4444', flexShrink:0 }}>
-                        {lider.nome.charAt(0).toUpperCase()}
+                      <div style={{ width:'32px', height:'32px', borderRadius:'50%', background: lider.ativo ? 'rgba(201,168,76,0.15)' : 'rgba(239,68,68,0.15)', border:`1.5px solid ${lider.ativo ? 'rgba(201,168,76,0.3)' : 'rgba(239,68,68,0.3)'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:700, color: lider.ativo ? '#C9A84C' : '#ef4444', flexShrink:0, overflow:'hidden' }}>
+                        {lider.foto_url
+                          ? <img src={lider.foto_url} alt={lider.nome} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                          : lider.nome.charAt(0).toUpperCase()
+                        }
                       </div>
                       <div style={{ flex:1, minWidth:0 }}>
                         <div style={{ fontSize:'12px', fontWeight:600, color:'#E8EDF5', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{lider.nome}</div>

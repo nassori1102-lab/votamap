@@ -26,6 +26,7 @@ type Lider = {
   secao_titulo: string
   observacoes: string
   meta_votos: number
+  foto_url: string
   ativo: boolean
   criado_em: string
 }
@@ -42,6 +43,7 @@ export default function LiderDetalhePage() {
   const [sucesso, setSucesso] = useState(false)
   const [totalApoiadores, setTotalApoiadores] = useState(0)
   const [form, setForm] = useState<Partial<Lider>>({})
+  const [uploadandoFoto, setUploadandoFoto] = useState(false)
 
   function mascaraTelefone(v: string) {
     return v.replace(/\D/g,'').slice(0,11)
@@ -107,6 +109,22 @@ export default function LiderDetalhePage() {
     setTimeout(() => setSucesso(false), 3000)
   }
 
+  async function handleFotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !lider) return
+    setUploadandoFoto(true)
+    const ext = file.name.split('.').pop()
+    const path = `${lider.id}.${ext}`
+    const { error } = await supabase.storage.from('fotos-lideres').upload(path, file, { upsert: true })
+    if (error) { setErro('Erro no upload: ' + error.message); setUploadandoFoto(false); return }
+    const { data: urlData } = supabase.storage.from('fotos-lideres').getPublicUrl(path)
+    const url = urlData.publicUrl + '?t=' + Date.now()
+    await supabase.from('lideres_regionais').update({ foto_url: url }).eq('id', lider.id)
+    setLider(prev => prev ? { ...prev, foto_url: url } : prev)
+    setForm(prev => ({ ...prev, foto_url: url }))
+    setUploadandoFoto(false)
+  }
+
   async function toggleAtivo() {
     const novoStatus = !lider?.ativo
     await supabase.from('lideres_regionais').update({ ativo: novoStatus }).eq('id', params.id)
@@ -152,8 +170,18 @@ export default function LiderDetalhePage() {
 
         {/* HEADER DO LÍDER */}
         <div style={{ display:'flex', alignItems:'flex-start', gap:'16px', marginBottom:'24px', background:'#0F2040', border:'1px solid #1C3558', borderRadius:'12px', padding: isMobile ? '20px' : '28px', flexWrap:'wrap' as const }}>
-          <div style={{ width:'64px', height:'64px', borderRadius:'50%', background:'rgba(201,168,76,0.15)', border:'2px solid rgba(201,168,76,0.3)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'24px', fontWeight:700, color:'#C9A84C', flexShrink:0 }}>
-            {lider.nome.charAt(0).toUpperCase()}
+          <div style={{ position:'relative', flexShrink:0 }}>
+            <div style={{ width:'72px', height:'72px', borderRadius:'50%', background:'rgba(201,168,76,0.15)', border:'2px solid rgba(201,168,76,0.3)', overflow:'hidden', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'26px', fontWeight:700, color:'#C9A84C' }}>
+              {lider.foto_url
+                ? <img src={lider.foto_url} alt={lider.nome} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                : lider.nome.charAt(0).toUpperCase()
+              }
+            </div>
+            <label style={{ position:'absolute', bottom:0, right:0, width:'24px', height:'24px', borderRadius:'50%', background: uploadandoFoto ? '#1C3558' : '#C9A84C', border:'2px solid #0F2040', display:'flex', alignItems:'center', justifyContent:'center', cursor: uploadandoFoto ? 'wait' : 'pointer', fontSize:'12px' }}
+              title="Trocar foto">
+              {uploadandoFoto ? '⏳' : '📷'}
+              <input type="file" accept="image/*" onChange={handleFotoUpload} style={{ display:'none' }} />
+            </label>
           </div>
           <div style={{ flex:1, minWidth:'200px' }}>
             <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'6px', flexWrap:'wrap' as const }}>

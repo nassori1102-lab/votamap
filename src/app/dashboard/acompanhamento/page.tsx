@@ -26,21 +26,21 @@ type MetaComProgresso = MetaLider & {
   liderCidade: string
 }
 
-function inicioSemana(data: Date): Date {
-  const d = new Date(data)
-  const dia = d.getDay()
-  const diff = d.getDate() - dia + (dia === 0 ? -6 : 1)
-  d.setDate(diff)
-  d.setHours(0, 0, 0, 0)
-  return d
+function hoje(): string { return new Date().toISOString().split('T')[0] }
+function diasAtras(n: number): string {
+  const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().split('T')[0]
+}
+function formatarData(iso: string): string {
+  return new Date(iso + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-function formatarSemana(iso: string): string {
-  const d = new Date(iso + 'T12:00:00')
-  const fim = new Date(d)
-  fim.setDate(fim.getDate() + 6)
-  return `${d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${fim.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}`
-}
+const PRESETS = [
+  { label: 'Hoje',    inicio: () => hoje(),       fim: () => hoje() },
+  { label: 'Ontem',   inicio: () => diasAtras(1),  fim: () => diasAtras(1) },
+  { label: '7 dias',  inicio: () => diasAtras(6),  fim: () => hoje() },
+  { label: '14 dias', inicio: () => diasAtras(13), fim: () => hoje() },
+  { label: '30 dias', inicio: () => diasAtras(29), fim: () => hoje() },
+]
 
 export default function AcompanhamentoPage() {
   const router = useRouter()
@@ -51,14 +51,17 @@ export default function AcompanhamentoPage() {
   const [lideres, setLideres] = useState<Lider[]>([])
   const [loading, setLoading] = useState(true)
   const [perfilUsuario, setPerfilUsuario] = useState('')
-  const [semanaAtual, setSemanaAtual] = useState(() => inicioSemana(new Date()).toISOString().split('T')[0])
+  const [periodoInicio, setPeriodoInicio] = useState(diasAtras(6))
+  const [periodoFim, setPeriodoFim] = useState(hoje())
+  const [presetAtivo, setPresetAtivo] = useState('7 dias')
   const [modalAberto, setModalAberto] = useState(false)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
   const [sucesso, setSucesso] = useState('')
 
   const [form, setForm] = useState({
-    lider_id: '', meta_apoiadores: '', cidade_foco: '', observacoes: '', semana_inicio: semanaAtual,
+    lider_id: '', meta_apoiadores: '', cidade_foco: '', observacoes: '',
+    data_inicio: hoje(), data_fim: hoje(),
   })
 
   const inputStyle = { padding: '10px 14px', background: '#0B1F3A', border: '1px solid #1C3558', borderRadius: '8px', color: '#E8EDF5', fontSize: '14px', outline: 'none', fontFamily: 'Inter, sans-serif', width: '100%', boxSizing: 'border-box' as const }
@@ -76,22 +79,23 @@ export default function AcompanhamentoPage() {
 
       setPerfilUsuario(perfil?.perfil || '')
       if (lids) setLideres(lids)
-      await carregarMetas(semanaAtual)
+      await carregarMetas(diasAtras(6), hoje())
       setLoading(false)
     }
     carregar()
   }, [])
 
-  async function carregarMetas(semana: string) {
+  async function carregarMetas(inicio: string, fim: string) {
     setLoading(true)
-    const fimSemana = new Date(semana + 'T00:00:00')
-    fimSemana.setDate(fimSemana.getDate() + 7)
-    const fimIso = fimSemana.toISOString().split('T')[0]
+    const fimMais1 = new Date(fim + 'T00:00:00')
+    fimMais1.setDate(fimMais1.getDate() + 1)
+    const fimIso = fimMais1.toISOString().split('T')[0]
 
     const { data: metasData } = await supabase
       .from('metas_lider')
       .select('*, lideres_regionais(nome, cidade, estado)')
-      .eq('semana_inicio', semana)
+      .gte('data_inicio', inicio)
+      .lte('data_inicio', fim)
       .order('criado_em', { ascending: false })
 
     if (!metasData) { setMetas([]); setLoading(false); return }
@@ -103,7 +107,7 @@ export default function AcompanhamentoPage() {
           .from('apoiadores')
           .select('id', { count: 'exact', head: true })
           .eq('lider_id', m.lider_id)
-          .gte('criado_em', semana + 'T00:00:00')
+          .gte('criado_em', inicio + 'T00:00:00')
           .lt('criado_em', fimIso + 'T00:00:00')
 
         if (m.cidade_foco) {
@@ -129,13 +133,18 @@ export default function AcompanhamentoPage() {
     setLoading(false)
   }
 
-  function mudarSemana(direcao: number) {
-    const d = new Date(semanaAtual + 'T12:00:00')
-    d.setDate(d.getDate() + direcao * 7)
-    const nova = d.toISOString().split('T')[0]
-    setSemanaAtual(nova)
-    setForm(p => ({ ...p, semana_inicio: nova }))
-    carregarMetas(nova)
+  function aplicarPreset(label: string, inicio: string, fim: string) {
+    setPresetAtivo(label)
+    setPeriodoInicio(inicio)
+    setPeriodoFim(fim)
+    carregarMetas(inicio, fim)
+  }
+
+  function aplicarPeriodoCustom(inicio: string, fim: string) {
+    setPresetAtivo('')
+    setPeriodoInicio(inicio)
+    setPeriodoFim(fim)
+    if (inicio && fim && inicio <= fim) carregarMetas(inicio, fim)
   }
 
   async function handleSalvar() {
@@ -145,7 +154,8 @@ export default function AcompanhamentoPage() {
 
     const { error } = await supabase.from('metas_lider').insert({
       lider_id: form.lider_id,
-      semana_inicio: form.semana_inicio,
+      data_inicio: form.data_inicio,
+      data_fim: form.data_fim,
       meta_apoiadores: parseInt(form.meta_apoiadores),
       cidade_foco: form.cidade_foco || null,
       observacoes: form.observacoes || null,
@@ -154,9 +164,9 @@ export default function AcompanhamentoPage() {
 
     if (error) { setErro('Erro ao salvar: ' + error.message); setSalvando(false); return }
 
-    await carregarMetas(semanaAtual)
+    await carregarMetas(periodoInicio, periodoFim)
     setModalAberto(false)
-    setForm({ lider_id: '', meta_apoiadores: '', cidade_foco: '', observacoes: '', semana_inicio: semanaAtual })
+    setForm({ lider_id: '', meta_apoiadores: '', cidade_foco: '', observacoes: '', data_inicio: hoje(), data_fim: hoje() })
     setSalvando(false)
     setSucesso('Meta criada com sucesso!')
     setTimeout(() => setSucesso(''), 3000)
@@ -165,7 +175,7 @@ export default function AcompanhamentoPage() {
   async function handleExcluir(id: string) {
     if (!confirm('Remover esta meta?')) return
     await supabase.from('metas_lider').delete().eq('id', id)
-    await carregarMetas(semanaAtual)
+    await carregarMetas(periodoInicio, periodoFim)
   }
 
   const podeCriar = ['coordenador'].includes(perfilUsuario)
@@ -175,9 +185,6 @@ export default function AcompanhamentoPage() {
   const mediaProgresso = totalMetas > 0 ? Math.round(metas.reduce((acc, m) => acc + m.percentual, 0) / totalMetas) : 0
   const totalMetaApoiadores = metas.reduce((acc, m) => acc + m.meta_apoiadores, 0)
   const totalRealizado = metas.reduce((acc, m) => acc + m.realizado, 0)
-
-  const semanaAtualInicio = inicioSemana(new Date()).toISOString().split('T')[0]
-  const isSemanaAtual = semanaAtual === semanaAtualInicio
 
   return (
     <div style={{ minHeight: '100vh', background: '#0B1F3A', fontFamily: 'Inter, system-ui, sans-serif' }}>
@@ -208,14 +215,32 @@ export default function AcompanhamentoPage() {
           <p style={{ fontSize: '14px', color: '#8FA4C0' }}>Metas de captação definidas por líder — acompanhe o progresso em tempo real</p>
         </div>
 
-        {/* NAVEGAÇÃO DE SEMANA */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', background: '#0F2040', border: '1px solid #1C3558', borderRadius: '10px', padding: '12px 16px', width: 'fit-content' }}>
-          <button onClick={() => mudarSemana(-1)} style={{ background: 'transparent', border: '1px solid #1C3558', borderRadius: '6px', color: '#8FA4C0', fontSize: '16px', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>‹</button>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: '#E8EDF5' }}>{formatarSemana(semanaAtual)}</div>
-            {isSemanaAtual && <div style={{ fontSize: '10px', color: '#C9A84C', fontWeight: 600, letterSpacing: '0.5px' }}>SEMANA ATUAL</div>}
+        {/* SELETOR DE PERÍODO */}
+        <div style={{ marginBottom: '24px' }}>
+          {/* Presets */}
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const, marginBottom: '10px' }}>
+            {PRESETS.map(p => (
+              <button key={p.label} onClick={() => aplicarPreset(p.label, p.inicio(), p.fim())}
+                style={{ padding: '7px 14px', borderRadius: '100px', border: `1px solid ${presetAtivo === p.label ? 'rgba(201,168,76,0.5)' : '#1C3558'}`, background: presetAtivo === p.label ? 'rgba(201,168,76,0.12)' : '#0F2040', color: presetAtivo === p.label ? '#C9A84C' : '#8FA4C0', fontSize: '13px', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: presetAtivo === p.label ? 600 : 400, transition: 'all .15s' }}>
+                {p.label}
+              </button>
+            ))}
           </div>
-          <button onClick={() => mudarSemana(1)} disabled={isSemanaAtual} style={{ background: 'transparent', border: '1px solid #1C3558', borderRadius: '6px', color: isSemanaAtual ? '#1C3558' : '#8FA4C0', fontSize: '16px', width: '32px', height: '32px', cursor: isSemanaAtual ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>›</button>
+          {/* Datas customizadas */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' as const }}>
+            <input type="date" value={periodoInicio} max={periodoFim}
+              onChange={e => aplicarPeriodoCustom(e.target.value, periodoFim)}
+              style={{ padding: '8px 12px', background: '#0F2040', border: `1px solid ${!presetAtivo ? 'rgba(201,168,76,0.4)' : '#1C3558'}`, borderRadius: '8px', color: '#E8EDF5', fontSize: '13px', outline: 'none', fontFamily: 'Inter, sans-serif', cursor: 'pointer' }} />
+            <span style={{ color: '#8FA4C0', fontSize: '13px' }}>até</span>
+            <input type="date" value={periodoFim} min={periodoInicio} max={hoje()}
+              onChange={e => aplicarPeriodoCustom(periodoInicio, e.target.value)}
+              style={{ padding: '8px 12px', background: '#0F2040', border: `1px solid ${!presetAtivo ? 'rgba(201,168,76,0.4)' : '#1C3558'}`, borderRadius: '8px', color: '#E8EDF5', fontSize: '13px', outline: 'none', fontFamily: 'Inter, sans-serif', cursor: 'pointer' }} />
+            <span style={{ fontSize: '12px', color: '#8FA4C0' }}>
+              {periodoInicio === periodoFim
+                ? formatarData(periodoInicio)
+                : `${formatarData(periodoInicio)} – ${formatarData(periodoFim)}`}
+            </span>
+          </div>
         </div>
 
         {sucesso && <div style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '8px', padding: '12px 16px', fontSize: '13px', color: '#C9A84C', marginBottom: '16px' }}>✓ {sucesso}</div>}
@@ -332,10 +357,15 @@ export default function AcompanhamentoPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
-              <div>
-                <label style={labelStyle}>Semana *</label>
-                <input type="date" value={form.semana_inicio} onChange={e => setForm(p => ({ ...p, semana_inicio: e.target.value }))} style={inputStyle} onFocus={e => e.target.style.borderColor = '#C9A84C'} onBlur={e => e.target.style.borderColor = '#1C3558'} />
-                <div style={{ fontSize: '11px', color: '#3D5470', marginTop: '4px' }}>Início da semana (segunda-feira recomendado)</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={labelStyle}>Início *</label>
+                  <input type="date" value={form.data_inicio} max={form.data_fim} onChange={e => setForm(p => ({ ...p, data_inicio: e.target.value }))} style={inputStyle} onFocus={e => e.target.style.borderColor = '#C9A84C'} onBlur={e => e.target.style.borderColor = '#1C3558'} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Fim *</label>
+                  <input type="date" value={form.data_fim} min={form.data_inicio} onChange={e => setForm(p => ({ ...p, data_fim: e.target.value }))} style={inputStyle} onFocus={e => e.target.style.borderColor = '#C9A84C'} onBlur={e => e.target.style.borderColor = '#1C3558'} />
+                </div>
               </div>
 
               <div>
