@@ -25,6 +25,7 @@ type Lider = {
   zona_titulo: string
   secao_titulo: string
   observacoes: string
+  meta_votos: number
   ativo: boolean
   criado_em: string
 }
@@ -167,6 +168,10 @@ export default function LiderDetalhePage() {
                 <div style={{ fontFamily:"'Playfair Display', serif", fontSize:'26px', fontWeight:800, color:'#C9A84C' }}>{totalApoiadores}</div>
                 <div style={{ fontSize:'11px', color:'#8FA4C0', textTransform:'uppercase' as const, letterSpacing:'1px' }}>Apoiadores</div>
               </div>
+              {lider.meta_votos > 0 && <div style={{ textAlign:'center' as const }}>
+                <div style={{ fontFamily:"'Playfair Display', serif", fontSize:'26px', fontWeight:800, color:'#86efac' }}>{lider.meta_votos.toLocaleString('pt-BR')}</div>
+                <div style={{ fontSize:'11px', color:'#8FA4C0', textTransform:'uppercase' as const, letterSpacing:'1px' }}>Meta de votos</div>
+              </div>}
               {lider.zona_eleitoral && <div style={{ textAlign:'center' as const }}>
                 <div style={{ fontFamily:"'Playfair Display', serif", fontSize:'26px', fontWeight:800, color:'#6ba3d6' }}>{lider.zona_eleitoral}</div>
                 <div style={{ fontSize:'11px', color:'#8FA4C0', textTransform:'uppercase' as const, letterSpacing:'1px' }}>Zona</div>
@@ -244,6 +249,16 @@ export default function LiderDetalhePage() {
           <div style={{ background:'#0F2040', border:'1px solid #1C3558', borderRadius:'12px', padding:'24px' }}>
             <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:'16px', fontWeight:700, color:'#C9A84C', marginBottom:'16px', paddingBottom:'10px', borderBottom:'1px solid #1C3558' }}>Dados Eleitorais</h2>
             <div style={{ display:'flex', flexDirection:'column' as const, gap:'14px' }}>
+              {/* META DE VOTOS */}
+              <div>
+                <div style={{ ...labelStyle, marginBottom:'4px' }}>Meta de votos comprometida</div>
+                {editando
+                  ? <input type="number" min="0" value={form.meta_votos || ''} onChange={e => setForm(prev => ({ ...prev, meta_votos: parseInt(e.target.value) || 0 }))} placeholder="Ex: 150" style={{ ...inputStyle, marginTop:'4px' }} onFocus={e => e.target.style.borderColor='#C9A84C'} onBlur={e => e.target.style.borderColor='#1C3558'} />
+                  : <div style={{ fontSize:'14px', color: lider.meta_votos > 0 ? '#86efac' : '#3D5470', marginTop:'4px', fontWeight: lider.meta_votos > 0 ? 600 : 400 }}>
+                      {lider.meta_votos > 0 ? `${lider.meta_votos.toLocaleString('pt-BR')} votos` : 'Não definida'}
+                    </div>
+                }
+              </div>
               {[['Zona Eleitoral','zona_eleitoral'],['Seção Eleitoral','secao_eleitoral'],['Nº Título de Eleitor','titulo_eleitor'],['Zona do Título','zona_titulo'],['Seção do Título','secao_titulo']].map(([label, campo]) => (
                 <div key={campo}>
                   <div style={labelStyle}>{label}</div>
