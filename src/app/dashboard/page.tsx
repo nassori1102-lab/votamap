@@ -70,6 +70,7 @@ export default function Dashboard() {
     { titulo:'Financeiro', desc:'Controle de investimentos por região', icone:'💰', href:'/dashboard/financeiro', ativo:true },
     { titulo:'Comunicação', desc:'SMS, WhatsApp e e-mail em massa', icone:'💬', href:'/dashboard/comunicacao', ativo:false },
     { titulo:'Agenda', desc:'Eventos e compromissos da campanha', icone:'📅', href:'/dashboard/agenda', ativo:true },
+    { titulo:'Pesquisas de Campo', desc:'Envie pesquisas e mapeie demandas por região', icone:'📋', href:'/dashboard/pesquisas', ativo:true },
     { titulo:'Apuração TSE', desc:'Cruzamento de votos com base cadastrada', icone:'📊', href:'/dashboard/apuracao', ativo:false },
   ]
 
