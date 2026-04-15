@@ -80,7 +80,7 @@ export default function PesquisasPage() {
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>📋</div>
             <div style={{ fontSize: '18px', fontWeight: 600, color: '#E8EDF5', marginBottom: '8px' }}>Nenhuma pesquisa criada</div>
             <div style={{ fontSize: '14px', color: '#8FA4C0', marginBottom: '24px' }}>Crie pesquisas de campo para mapear desafios por região</div>
-            <button onClick={() => router.push('/dashboard/pesquisas/criar')}
+            <button onClick={() => router.push('/dashboard/pesquisas-nova')}
               style={{ background: 'linear-gradient(135deg, #E8C87A, #A07830)', border: 'none', borderRadius: '8px', color: '#0B1F3A', fontSize: '14px', fontWeight: 600, padding: '12px 28px', cursor: 'pointer' }}>
               + Criar primeira pesquisa
             </button>
