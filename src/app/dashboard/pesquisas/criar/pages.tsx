@@ -102,12 +102,12 @@ export default function NovaPesquisaPage() {
 
     if (form.segmentacao === 'lider' && form.lider_id) {
       const { data } = await supabase.from('lideres_regionais').select('id, nome').eq('id', form.lider_id)
-      if (data) destinatarios = data.map(l => ({ respondente_tipo: 'lider', respondente_id: l.id, respondente_nome: l.nome }))
+      if (data) destinatarios = data.map((l: {id: string; nome: string}) => ({ respondente_tipo: 'lider', respondente_id: l.id, respondente_nome: l.nome }))
     } else if (form.segmentacao === 'regiao' && form.regiao) {
       const { data: lids } = await supabase.from('lideres_regionais').select('id, nome').ilike('bairro', `%${form.regiao}%`)
       const { data: aps } = await supabase.from('apoiadores').select('id, nome').ilike('bairro', `%${form.regiao}%`)
-      if (lids) destinatarios.push(...lids.map(l => ({ respondente_tipo: 'lider', respondente_id: l.id, respondente_nome: l.nome })))
-      if (aps) destinatarios.push(...aps.map(a => ({ respondente_tipo: 'apoiador', respondente_id: a.id, respondente_nome: a.nome })))
+      if (lids) destinatarios.push(...lids.map((l: {id: string; nome: string}) => ({ respondente_tipo: 'lider', respondente_id: l.id, respondente_nome: l.nome })))
+      if (aps) destinatarios.push(...aps.map((a: {id: string; nome: string}) => ({ respondente_tipo: 'apoiador', respondente_id: a.id, respondente_nome: a.nome })))
     } else {
       const { data: lids } = await supabase.from('lideres_regionais').select('id, nome').eq('ativo', true)
       const { data: aps } = await supabase.from('apoiadores').select('id, nome')
