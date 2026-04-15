@@ -18,7 +18,9 @@ export default function NovaPesquisaPage() {
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
   const [lideres, setLideres] = useState<Lider[]>([])
+  const [cidades, setCidades] = useState<string[]>([])
   const [bairros, setBairros] = useState<string[]>([])
+  const [todosLocais, setTodosLocais] = useState<{cidade: string; bairro: string}[]>([])
   const [copiado, setCopiado] = useState<string | null>(null)
 
   const [form, setForm] = useState({
@@ -26,6 +28,7 @@ export default function NovaPesquisaPage() {
     descricao: '',
     segmentacao: 'todos',
     regiao: '',
+    cidade: '',
     lider_ids: [] as string[],
   })
 
@@ -39,12 +42,13 @@ export default function NovaPesquisaPage() {
       if (!user) { router.push('/login'); return }
       const { data } = await supabase.from('lideres_regionais').select('id, nome').eq('ativo', true).order('nome')
       if (data) setLideres(data)
-        const { data: bairrosLid } = await supabase.from('lideres_regionais').select('bairro').eq('ativo', true)
-const { data: bairrosAp } = await supabase.from('apoiadores').select('bairro')
+        const { data: bairrosLid } = await supabase.from('lideres_regionais').select('cidade, bairro').eq('ativo', true)
+const { data: bairrosAp } = await supabase.from('apoiadores').select('cidade, bairro')
 const todos = [...(bairrosLid || []), ...(bairrosAp || [])]
-  .map(b => b.bairro).filter(Boolean)
-const unicos = [...new Set(todos)].sort()
-setBairros(unicos)
+  .filter(b => b.cidade && b.bairro)
+setTodosLocais(todos)
+const cidadesUnicas = [...new Set(todos.map(b => b.cidade))].sort()
+setCidades(cidadesUnicas)
     }
     carregar()
   }, [])
@@ -111,8 +115,13 @@ setBairros(unicos)
   const { data } = await supabase.from('lideres_regionais').select('id, nome').in('id', form.lider_ids)
   if (data) destinatarios = data.map((l: {id: string; nome: string}) => ({ respondente_tipo: 'lider', respondente_id: l.id, respondente_nome: l.nome }))
     } else if (form.segmentacao === 'regiao' && form.regiao) {
-      const { data: lids } = await supabase.from('lideres_regionais').select('id, nome').ilike('bairro', `%${form.regiao}%`)
-      const { data: aps } = await supabase.from('apoiadores').select('id, nome').ilike('bairro', `%${form.regiao}%`)
+      let queryLids = supabase.from('lideres_regionais').select('id, nome').eq('cidade', form.cidade)
+if (form.regiao) queryLids = queryLids.eq('bairro', form.regiao)
+const { data: lids } = await queryLids
+
+let queryAps = supabase.from('apoiadores').select('id, nome').eq('cidade', form.cidade)
+if (form.regiao) queryAps = queryAps.eq('bairro', form.regiao)
+const { data: aps } = await queryAps
       if (lids) destinatarios.push(...lids.map((l: {id: string; nome: string}) => ({ respondente_tipo: 'lider', respondente_id: l.id, respondente_nome: l.nome })))
       if (aps) destinatarios.push(...aps.map((a: {id: string; nome: string}) => ({ respondente_tipo: 'apoiador', respondente_id: a.id, respondente_nome: a.nome })))
     } else {
@@ -177,20 +186,40 @@ setBairros(unicos)
                   </select>
                 </div>
                 {form.segmentacao === 'regiao' && (
-  <div>
-    <label style={labelStyle}>Região / Bairro</label>
-    <input
-      value={form.regiao}
-      onChange={e => setForm(p => ({ ...p, regiao: e.target.value }))}
-      placeholder="Digite ou selecione um bairro..."
-      list="lista-bairros"
-      style={inputStyle}
-      onFocus={e => e.target.style.borderColor = '#C9A84C'}
-      onBlur={e => e.target.style.borderColor = '#1C3558'}
-    />
-    <datalist id="lista-bairros">
-      {bairros.map(b => <option key={b} value={b} />)}
-    </datalist>
+  <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
+    <div>
+      <label style={labelStyle}>Cidade</label>
+      <select
+        value={form.cidade}
+        onChange={e => {
+          const cidade = e.target.value
+          setForm(p => ({ ...p, cidade, regiao: '' }))
+          const bairrosDaCidade = [...new Set(
+            todosLocais.filter(l => l.cidade === cidade).map(l => l.bairro)
+          )].sort()
+          setBairros(bairrosDaCidade)
+        }}
+        style={{ ...inputStyle, cursor:'pointer', color: form.cidade ? '#E8EDF5' : '#8FA4C0' }}
+        onFocus={e => e.target.style.borderColor = '#C9A84C'}
+        onBlur={e => e.target.style.borderColor = '#1C3558'}>
+        <option value="">Selecione a cidade</option>
+        {cidades.map(c => <option key={c} value={c}>{c}</option>)}
+      </select>
+    </div>
+    {form.cidade && (
+      <div>
+        <label style={labelStyle}>Bairro</label>
+        <select
+          value={form.regiao}
+          onChange={e => setForm(p => ({ ...p, regiao: e.target.value }))}
+          style={{ ...inputStyle, cursor:'pointer', color: form.regiao ? '#E8EDF5' : '#8FA4C0' }}
+          onFocus={e => e.target.style.borderColor = '#C9A84C'}
+          onBlur={e => e.target.style.borderColor = '#1C3558'}>
+          <option value="">Todos os bairros de {form.cidade}</option>
+          {bairros.map(b => <option key={b} value={b}>{b}</option>)}
+        </select>
+      </div>
+    )}
   </div>
 )}
                 {form.segmentacao === 'lider' && (
