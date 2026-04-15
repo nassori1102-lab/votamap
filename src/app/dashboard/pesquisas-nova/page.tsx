@@ -25,7 +25,7 @@ export default function NovaPesquisaPage() {
     descricao: '',
     segmentacao: 'todos',
     regiao: '',
-    lider_id: '',
+    lider_ids: [] as string[],
   })
 
   const [perguntas, setPerguntas] = useState<Pergunta[]>([
@@ -80,7 +80,7 @@ export default function NovaPesquisaPage() {
       descricao: form.descricao,
       segmentacao: form.segmentacao,
       regiao: form.regiao || null,
-      lider_id: form.lider_id || null,
+      lider_id: form.lider_ids?.[0] || null,
       status: 'ativa',
     }).select().single()
 
@@ -100,9 +100,9 @@ export default function NovaPesquisaPage() {
     // Gerar tokens para destinatários
     let destinatarios: any[] = []
 
-    if (form.segmentacao === 'lider' && form.lider_id) {
-      const { data } = await supabase.from('lideres_regionais').select('id, nome').eq('id', form.lider_id)
-      if (data) destinatarios = data.map((l: {id: string; nome: string}) => ({ respondente_tipo: 'lider', respondente_id: l.id, respondente_nome: l.nome }))
+    if (form.segmentacao === 'lider' && form.lider_ids.length > 0) {
+  const { data } = await supabase.from('lideres_regionais').select('id, nome').in('id', form.lider_ids)
+  if (data) destinatarios = data.map((l: {id: string; nome: string}) => ({ respondente_tipo: 'lider', respondente_id: l.id, respondente_nome: l.nome }))
     } else if (form.segmentacao === 'regiao' && form.regiao) {
       const { data: lids } = await supabase.from('lideres_regionais').select('id, nome').ilike('bairro', `%${form.regiao}%`)
       const { data: aps } = await supabase.from('apoiadores').select('id, nome').ilike('bairro', `%${form.regiao}%`)
@@ -177,12 +177,18 @@ export default function NovaPesquisaPage() {
                 )}
                 {form.segmentacao === 'lider' && (
                   <div>
-                    <label style={labelStyle}>Líder</label>
-                    <select value={form.lider_id} onChange={e => setForm(p => ({ ...p, lider_id: e.target.value }))} style={{ ...inputStyle, cursor: 'pointer', color: form.lider_id ? '#E8EDF5' : '#8FA4C0' }} onFocus={e => e.target.style.borderColor = '#C9A84C'} onBlur={e => e.target.style.borderColor = '#1C3558'}>
-                      <option value="">Selecione o líder</option>
-                      {lideres.map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
-                    </select>
-                  </div>
+  <label style={labelStyle}>Líderes</label>
+  <div style={{ display:'flex', flexDirection:'column', gap:'6px', maxHeight:'200px', overflowY:'auto', padding:'4px' }}>
+    {lideres.map(l => (
+      <label key={l.id} style={{ display:'flex', alignItems:'center', gap:'10px', cursor:'pointer', padding:'8px 12px', borderRadius:'8px', border:`1px solid ${form.lider_ids.includes(l.id) ? 'rgba(201,168,76,0.4)' : '#1C3558'}`, background: form.lider_ids.includes(l.id) ? 'rgba(201,168,76,0.08)' : 'transparent' }}>
+        <input type="checkbox" checked={form.lider_ids.includes(l.id)}
+          onChange={e => setForm(p => ({ ...p, lider_ids: e.target.checked ? [...p.lider_ids, l.id] : p.lider_ids.filter(id => id !== l.id) }))}
+          style={{ accentColor:'#C9A84C' }} />
+        <span style={{ fontSize:'14px', color:'#E8EDF5' }}>{l.nome}</span>
+      </label>
+    ))}
+  </div>
+</div>
                 )}
               </div>
             </div>
