@@ -18,6 +18,7 @@ export default function NovaPesquisaPage() {
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
   const [lideres, setLideres] = useState<Lider[]>([])
+  const [bairros, setBairros] = useState<string[]>([])
   const [copiado, setCopiado] = useState<string | null>(null)
 
   const [form, setForm] = useState({
@@ -38,6 +39,12 @@ export default function NovaPesquisaPage() {
       if (!user) { router.push('/login'); return }
       const { data } = await supabase.from('lideres_regionais').select('id, nome').eq('ativo', true).order('nome')
       if (data) setLideres(data)
+        const { data: bairrosLid } = await supabase.from('lideres_regionais').select('bairro').eq('ativo', true)
+const { data: bairrosAp } = await supabase.from('apoiadores').select('bairro')
+const todos = [...(bairrosLid || []), ...(bairrosAp || [])]
+  .map(b => b.bairro).filter(Boolean)
+const unicos = [...new Set(todos)].sort()
+setBairros(unicos)
     }
     carregar()
   }, [])
@@ -170,11 +177,22 @@ export default function NovaPesquisaPage() {
                   </select>
                 </div>
                 {form.segmentacao === 'regiao' && (
-                  <div>
-                    <label style={labelStyle}>Região / Bairro</label>
-                    <input value={form.regiao} onChange={e => setForm(p => ({ ...p, regiao: e.target.value }))} placeholder="Ex: Zona Norte, Centro..." style={inputStyle} onFocus={e => e.target.style.borderColor = '#C9A84C'} onBlur={e => e.target.style.borderColor = '#1C3558'} />
-                  </div>
-                )}
+  <div>
+    <label style={labelStyle}>Região / Bairro</label>
+    <input
+      value={form.regiao}
+      onChange={e => setForm(p => ({ ...p, regiao: e.target.value }))}
+      placeholder="Digite ou selecione um bairro..."
+      list="lista-bairros"
+      style={inputStyle}
+      onFocus={e => e.target.style.borderColor = '#C9A84C'}
+      onBlur={e => e.target.style.borderColor = '#1C3558'}
+    />
+    <datalist id="lista-bairros">
+      {bairros.map(b => <option key={b} value={b} />)}
+    </datalist>
+  </div>
+)}
                 {form.segmentacao === 'lider' && (
                   <div>
   <label style={labelStyle}>Líderes</label>
