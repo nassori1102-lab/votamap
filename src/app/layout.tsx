@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import IAChatFlutuante from '@/components/IAChatFlutuante'
 
 export const metadata: Metadata = {
   title: "CandMaps — Inteligência Estratégica para Campanhas Eleitorais",
@@ -21,7 +22,10 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+  {children}
+  <IAChatFlutuante />
+</body>
     </html>
   );
 }

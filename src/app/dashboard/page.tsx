@@ -58,6 +58,7 @@ export default function Dashboard() {
   )
 
   const modulos = [
+    { titulo:'IA Assistente', desc:'Estratégias, conteúdo e análise da campanha', icone:'✦', href:'/dashboard/ia', ativo:true },
     { titulo:'Candidato', desc:'Perfil, cargo e dados da candidatura', icone:'🏛️', href:'/dashboard/candidato', ativo:true },
     { titulo:'Líderes Regionais', desc:'Cadastre e gerencie sua rede de líderes', icone:'👥', href:'/dashboard/lideres', ativo:true },
     { titulo:'Apoiadores', desc:'Base eleitoral cadastrada pelos líderes', icone:'🗳', href:'/dashboard/apoiadores', ativo:true },
