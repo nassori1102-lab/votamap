@@ -15,18 +15,19 @@ const MapaComponent = dynamic(() => import('@/components/mapa/MapaComponent'), {
   )
 })
 
-type Lider = {
-  id: string
-  nome: string
-  bairro: string
-  cidade: string
-  estado: string
-  latitude: number | null
-  longitude: number | null
-  ativo: boolean
-  telefone: string
-  zona_eleitoral: string
+  type Lider = {
+    id: string
+    nome: string
+    bairro: string
+    cidade: string
+    estado: string
+    latitude: number | null
+    longitude: number | null
+    ativo: boolean
+    telefone: string
+    zona_eleitoral: string
   foto_url?: string
+meta_votos?: number
 }
 
 type Apoiador = {
@@ -62,7 +63,7 @@ export default function MapaPage() {
   async function carregarDados() {
     const [{ data: lideresData }, { data: apoiadoresData }] = await Promise.all([
       supabase.from('lideres_regionais')
-        .select('id, nome, bairro, cidade, estado, latitude, longitude, ativo, telefone, zona_eleitoral, foto_url')
+        .select('id, nome, bairro, cidade, estado, latitude, longitude, ativo, telefone, zona_eleitoral, foto_url, meta_votos')
         .order('nome'),
       supabase.from('apoiadores')
         .select('id, nome, lider_id, engajamento, bairro, cidade'),
@@ -241,11 +242,16 @@ export default function MapaPage() {
                         <div style={{ fontSize:'11px', color:'#8FA4C0', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{lider.cidade}</div>
                       </div>
                       <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:'3px', flexShrink:0 }}>
-                        {count > 0 && (
-                          <span style={{ fontSize:'10px', fontWeight:600, color:'#6ba3d6', background:'rgba(107,163,214,0.1)', border:'1px solid rgba(107,163,214,0.2)', borderRadius:'8px', padding:'1px 6px' }}>
-                            {count} 🗳
-                          </span>
-                        )}
+                      {count > 0 && (
+  <span style={{ fontSize:'10px', fontWeight:600, color:'#6ba3d6', background:'rgba(107,163,214,0.1)', border:'1px solid rgba(107,163,214,0.2)', borderRadius:'8px', padding:'1px 6px' }}>
+    {count} 🗳
+  </span>
+)}
+{lider.meta_votos ? (
+  <span style={{ fontSize:'10px', fontWeight:600, color:'#C9A84C', background:'rgba(201,168,76,0.1)', border:'1px solid rgba(201,168,76,0.2)', borderRadius:'8px', padding:'1px 6px' }}>
+    {lider.meta_votos} 🎯
+  </span>
+) : null}
                         <div style={{ width:'5px', height:'5px', borderRadius:'50%', background: lider.latitude ? '#C9A84C' : '#3D5470' }} />
                       </div>
                     </div>
