@@ -8,9 +8,9 @@ export async function GET(req: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    const res = await fetch('https://www.tse.jus.br/@@rss-news', {
-      headers: { 'User-Agent': 'Mozilla/5.0 CandMaps/1.0' },
-    })
+    const res = await fetch('https://noticias.tse.jus.br/@@rss.xml', {
+  headers: { 'User-Agent': 'Mozilla/5.0 CandMaps/1.0' },
+})
 
     if (!res.ok) {
       return NextResponse.json({ error: `TSE retornou ${res.status}` }, { status: 500 })
