@@ -33,11 +33,12 @@ export default function TSEPage() {
   const [mensagem, setMensagem] = useState('')
   const [naoLidas, setNaoLidas] = useState(0)
 
-  useEffect(() => {
+ useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
       await carregar()
+      await atualizar()
     }
     init()
   }, [])
