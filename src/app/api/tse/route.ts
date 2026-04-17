@@ -32,7 +32,15 @@ export async function GET(req: NextRequest) {
     while ((match = itemRegex.exec(xml)) !== null) {
       const item = match[1]
       const titulo = (item.match(tituloRegex)?.[1] || '').trim()
-      const descricao = (item.match(descRegex)?.[1] || '').replace(/<[^>]*>/g, '').trim().slice(0, 500)
+      const descricao = (item.match(descRegex)?.[1] || '')
+  .replace(/<[^>]*>/g, '')
+  .replace(/&lt;/g, '')
+  .replace(/&gt;/g, '')
+  .replace(/&amp;/g, '')
+  .replace(/&nbsp;/g, ' ')
+  .replace(/\s+/g, ' ')
+  .trim()
+  .slice(0, 300)
       const link = (item.match(linkRegex)?.[1] || '').trim()
       const pubDate = (item.match(dateRegex)?.[1] || '').trim()
 
