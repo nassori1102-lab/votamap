@@ -70,6 +70,7 @@ export async function GET(req: NextRequest) {
     })
 
   } catch (error: any) {
+        console.error('Erro TSE:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
