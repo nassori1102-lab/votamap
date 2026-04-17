@@ -31,13 +31,22 @@ export async function GET(req: NextRequest) {
 
     while ((match = itemRegex.exec(xml)) !== null) {
       const item = match[1]
-      const titulo = (item.match(tituloRegex)?.[1] || '').trim()
-      const descricao = (item.match(descRegex)?.[1] || '')
+      const tituloRaw = item.match(tituloRegex)?.[1] || ''
+const titulo = tituloRaw
   .replace(/<[^>]*>/g, '')
-  .replace(/&lt;/g, '')
-  .replace(/&gt;/g, '')
-  .replace(/&amp;/g, '')
-  .replace(/&nbsp;/g, ' ')
+  .replace(/&lt;.*$/g, '')
+  .replace(' - Tribunal Superior Eleitoral', '')
+  .replace(/&amp;/g, '&')
+  .trim()
+
+const descricaoRaw = item.match(descRegex)?.[1] || ''
+const descricao = descricaoRaw
+  .replace(/<a\s[^>]*>.*?<\/a>/gi, '')
+  .replace(/<[^>]*>/g, '')
+  .replace(/&lt;/gi, '')
+  .replace(/&gt;/gi, '')
+  .replace(/&amp;/gi, '&')
+  .replace(/&nbsp;/gi, ' ')
   .replace(/\s+/g, ' ')
   .trim()
   .slice(0, 300)
