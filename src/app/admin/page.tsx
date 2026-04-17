@@ -67,8 +67,11 @@ export default function AdminPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/login'); return }
       const user = session.user
-      const { data: admin } = await supabase.from('admins').select('*').eq('user_id', user.id).eq('ativo', true).single()
-      if (!admin) { router.push('/dashboard'); return }
+      const { data: admin, error: adminError } = await supabase.from('admins').select('*').eq('user_id', user.id).eq('ativo', true).single()
+            console.log('user.id:', user.id)
+            console.log('admin:', admin)
+            console.log('adminError:', adminError)
+      if (!admin) { router.push('/login'); return }
       setAutorizado(true)
       await carregar()
     }
