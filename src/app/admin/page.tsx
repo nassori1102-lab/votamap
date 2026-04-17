@@ -64,8 +64,9 @@ export default function AdminPage() {
 
   useEffect(() => {
     async function verificar() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { router.push('/login'); return }
+      const user = session.user
       const { data: admin } = await supabase.from('admins').select('*').eq('user_id', user.id).eq('ativo', true).single()
       if (!admin) { router.push('/dashboard'); return }
       setAutorizado(true)
