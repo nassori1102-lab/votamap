@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    const res = await fetch('https://www.tse.jus.br/comunicacao/noticias/noticias-rss/noticias.xml', {
+    const res = await fetch('https://www.tse.jus.br/@@rss-news', {
       headers: { 'User-Agent': 'Mozilla/5.0 CandMaps/1.0' },
     })
 
