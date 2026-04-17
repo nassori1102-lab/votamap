@@ -58,6 +58,7 @@ export default function Dashboard() {
   )
 
   const modulos = [
+    { titulo:'Normativas TSE', desc:'Resoluções e portarias do Tribunal Superior Eleitoral', icone:'⚖️', href:'/dashboard/tse', ativo:true },
     { titulo:'IA Assistente', desc:'Estratégias, conteúdo e análise da campanha', icone:'✦', href:'/dashboard/ia', ativo:true },
     { titulo:'Candidato', desc:'Perfil, cargo e dados da candidatura', icone:'🏛️', href:'/dashboard/candidato', ativo:true },
     { titulo:'Líderes Regionais', desc:'Cadastre e gerencie sua rede de líderes', icone:'👥', href:'/dashboard/lideres', ativo:true },
